@@ -107,8 +107,7 @@ class HomeScreen extends StatelessWidget {
         builder: (context, provider, _) {
           if (provider.entries.isEmpty) {
             return const Center(
-              child: Text('No sleep records yet.
-Tap + to add.', textAlign: TextAlign.center),
+              child: Text('No sleep records yet. Tap + to add.', textAlign: TextAlign.center),
             );
           }
           return ListView.builder(
@@ -164,6 +163,7 @@ Tap + to add.', textAlign: TextAlign.center),
                         initialTime: TimeOfDay.fromDateTime(now),
                       );
                       if (time == null) return;
+                      if (!context.mounted) return;
                       setState(() {
                         sleepTime = DateTime(
                           date.year,
@@ -194,6 +194,7 @@ Tap + to add.', textAlign: TextAlign.center),
                         initialTime: TimeOfDay.fromDateTime(now),
                       );
                       if (time == null) return;
+                      if (!context.mounted) return;
                       setState(() {
                         wakeTime = DateTime(
                           date.year,
