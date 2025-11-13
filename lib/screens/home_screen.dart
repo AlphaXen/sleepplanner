@@ -150,21 +150,20 @@ class HomeScreen extends StatelessWidget {
                     label: 'Sleep Time',
                     value: sleepTime,
                     onTap: () async {
-                      final ctx = context;
+                      if (!context.mounted) return;
                       final now = DateTime.now();
                       final date = await showDatePicker(
-                        context: ctx,
+                        context: context,
                         initialDate: now,
                         firstDate: DateTime(now.year - 1),
                         lastDate: DateTime(now.year + 1),
                       );
-                      if (date == null) return;
+                      if (date == null || !context.mounted) return;
                       final time = await showTimePicker(
-                        context: ctx,
+                        context: context,
                         initialTime: TimeOfDay.fromDateTime(now),
                       );
-                      if (time == null) return;
-                      if (!ctx.mounted) return;
+                      if (time == null || !context.mounted) return;
                       setState(() {
                         sleepTime = DateTime(
                           date.year,
@@ -182,21 +181,20 @@ class HomeScreen extends StatelessWidget {
                     label: 'Wake Time',
                     value: wakeTime,
                     onTap: () async {
-                      final ctx = context;
+                      if (!context.mounted) return;
                       final now = DateTime.now();
                       final date = await showDatePicker(
-                        context: ctx,
+                        context: context,
                         initialDate: now,
                         firstDate: DateTime(now.year - 1),
                         lastDate: DateTime(now.year + 1),
                       );
-                      if (date == null) return;
+                      if (date == null || !context.mounted) return;
                       final time = await showTimePicker(
-                        context: ctx,
+                        context: context,
                         initialTime: TimeOfDay.fromDateTime(now),
                       );
-                      if (time == null) return;
-                      if (!ctx.mounted) return;
+                      if (time == null || !context.mounted) return;
                       setState(() {
                         wakeTime = DateTime(
                           date.year,
