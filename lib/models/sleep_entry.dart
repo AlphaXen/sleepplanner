@@ -14,6 +14,6 @@ class SleepEntry {
   String get formattedDuration {
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
-    return '\${hours}h \${minutes}m';
+    return '${hours}h ${minutes}m';
   }
 }

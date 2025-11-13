@@ -150,20 +150,21 @@ class HomeScreen extends StatelessWidget {
                     label: 'Sleep Time',
                     value: sleepTime,
                     onTap: () async {
+                      final ctx = context;
                       final now = DateTime.now();
                       final date = await showDatePicker(
-                        context: context,
+                        context: ctx,
                         initialDate: now,
                         firstDate: DateTime(now.year - 1),
                         lastDate: DateTime(now.year + 1),
                       );
                       if (date == null) return;
                       final time = await showTimePicker(
-                        context: context,
+                        context: ctx,
                         initialTime: TimeOfDay.fromDateTime(now),
                       );
                       if (time == null) return;
-                      if (!context.mounted) return;
+                      if (!ctx.mounted) return;
                       setState(() {
                         sleepTime = DateTime(
                           date.year,
@@ -181,20 +182,21 @@ class HomeScreen extends StatelessWidget {
                     label: 'Wake Time',
                     value: wakeTime,
                     onTap: () async {
+                      final ctx = context;
                       final now = DateTime.now();
                       final date = await showDatePicker(
-                        context: context,
+                        context: ctx,
                         initialDate: now,
                         firstDate: DateTime(now.year - 1),
                         lastDate: DateTime(now.year + 1),
                       );
                       if (date == null) return;
                       final time = await showTimePicker(
-                        context: context,
+                        context: ctx,
                         initialTime: TimeOfDay.fromDateTime(now),
                       );
                       if (time == null) return;
-                      if (!context.mounted) return;
+                      if (!ctx.mounted) return;
                       setState(() {
                         wakeTime = DateTime(
                           date.year,
