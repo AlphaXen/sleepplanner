@@ -1,68 +1,53 @@
-# SleepPlanner 💤
+# SleepPlanner Full Adaptive (v2)
 
-A Flutter app for tracking daily sleep time and helping **night-shift / rotating workers** stay healthy.
+교대·야간 근무자를 위한 Sleep Planner 앱 예제입니다.
 
-## Features
+## 포함 기능
 
-- Record sleep sessions (sleep time → wake time)
-- Mark whether the sleep is after a night shift
-- See today\'s total sleep time vs daily target
-- Circular progress indicator for daily goal
-- Simple settings for:
-  - Daily sleep target hours
-  - Night-shift worker mode toggle
-- Health tips section for night workers
+- 수면 기록 관리
+- Daily Target 설정
+- 목표 달성 시 로컬 Notification
+- 최근 7일 수면 그래프 (Line chart, fl_chart)
+- 오늘 목표 달성률 Pie chart
+- Adaptive Sleep Algorithm
+  - AdaptiveParams (T_sleep, caf_window, winddown, chrono_offset, light_sens, caf_sens)
+  - DAILY Recommendation (근무 타입/시간에 따른 수면 계획)
+  - Weekly Adaptation (adaptWeekly + SleepProvider.adaptWeeklyWithSummary)
+- Daily Sleep Plan UI
+  - Main sleep
+  - Caffeine cutoff
+  - Wind-down start
+  - Light plan
+  - Notes
 
-## Getting Started
-
-### 1. Clone this repository
-
-```bash
-git clone https://github.com/thetkomaung9/sleepplanner.git
-cd sleepplanner
-```
-
-### 2. Install dependencies
+## 실행 방법
 
 ```bash
 flutter pub get
-```
-
-### 3. Run the app
-
-```bash
+flutter create .
 flutter run
 ```
 
-You can run it on:
+> android/ios 폴더가 없다면 `flutter create .` 명령으로 생성해 주세요.
 
-- Android emulator / physical device
-- iOS simulator / device
-- Web (`flutter run -d chrome`)
-
-## Tech Stack
-
-- Flutter (Material 3, dark theme)
-- provider (simple state management)
-
-## Folder Structure
+## 주요 파일 구조
 
 ```text
 lib/
  ├─ main.dart
  ├─ models/
- │   └─ sleep_entry.dart
+ │   ├─ sleep_entry.dart
+ │   ├─ adaptive_params.dart
+ │   ├─ shift_info.dart
+ │   └─ daily_plan.dart
  ├─ providers/
  │   └─ sleep_provider.dart
+ ├─ services/
+ │   ├─ notification_service.dart
+ │   └─ adaptive_sleep_service.dart
  └─ screens/
      ├─ home_screen.dart
-     └─ shift_settings_screen.dart
+     ├─ stats_screen.dart
+     ├─ daily_plan_screen.dart
+     └─ shift_input_screen.dart
 ```
-
-## Next Steps / Ideas
-
-- Persist data using Drift (SQLite)
-- Add charts (weekly/monthly graphs)
-- Integrate local notifications for bedtime reminders
-- Add multi-language support (Korean, Myanmar)
-- Export sleep report as PDF
