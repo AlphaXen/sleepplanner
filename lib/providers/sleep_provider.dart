@@ -5,6 +5,11 @@ import '../models/adaptive_params.dart';
 import '../models/shift_info.dart';
 import '../models/daily_plan.dart';
 import '../services/adaptive_sleep_service.dart';
+import '../services/alarm_service.dart';
+
+void scheduleSleepAlarm(DateTime wakeTime) {
+  AlarmService.instance.scheduleAlarm(wakeTime);
+}
 
 class SleepProvider extends ChangeNotifier {
   final List<SleepEntry> _entries = [];
@@ -58,15 +63,14 @@ class SleepProvider extends ChangeNotifier {
     final now = DateTime.now();
     final Map<DateTime, double> result = {};
     for (int i = 6; i >= 0; i--) {
-      final day = DateTime(now.year, now.month, now.day)
-          .subtract(Duration(days: i));
+      final day =
+          DateTime(now.year, now.month, now.day).subtract(Duration(days: i));
       result[day] = 0;
     }
     for (final e in _entries) {
       final key = e.dateKey;
       if (result.containsKey(key)) {
-        result[key] =
-            (result[key] ?? 0) + e.duration.inMinutes / 60.0;
+        result[key] = (result[key] ?? 0) + e.duration.inMinutes / 60.0;
       }
     }
     return result;
@@ -79,8 +83,7 @@ class SleepProvider extends ChangeNotifier {
   Future<void> _checkGoalAndNotify() async {
     if (!_goalNotifiedToday && todayProgress >= 1) {
       _goalNotifiedToday = true;
-      await NotificationService.instance
-          .showGoalReachedNotification();
+      await NotificationService.instance.showGoalReachedNotification();
     }
   }
 
