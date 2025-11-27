@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
 import 'providers/sleep_provider.dart';
 import 'providers/auto_reply_provider.dart';
 import 'providers/theme_provider.dart';
@@ -11,6 +12,10 @@ import 'screens/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize timezone for alarm scheduling
+  tz.initializeTimeZones();
+
   try {
     await Firebase.initializeApp(); // firebase_options.dart 쓰면 옵션 추가
   } catch (e, st) {

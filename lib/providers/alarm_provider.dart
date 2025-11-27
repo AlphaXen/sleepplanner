@@ -1,14 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../models/alarm_model.dart';
+import '../services/alarm_notification_service.dart';
 
 class AlarmProvider with ChangeNotifier {
   List<AlarmModel> _alarms = [];
   final AudioPlayer _alarmPlayer = AudioPlayer();
+  final AlarmNotificationService _notificationService =
+      AlarmNotificationService();
 
   List<AlarmModel> get alarms => _alarms;
 
   AlarmProvider() {
+    _initializeAlarms();
+  }
+
+  Future<void> _initializeAlarms() async {
+    await _notificationService.initialize();
+
+    // Set up callback for when alarm triggers
+    _notificationService.onAlarmTriggered = (alarmId) {
+      final alarm = _alarms.firstWhere(
+        (a) => a.id == alarmId,
+        orElse: () => _alarms.first,
+      );
+      playAlarmSound(alarm.soundPath);
+    };
+
     _loadSampleAlarms();
   }
 
@@ -30,10 +48,20 @@ class AlarmProvider with ChangeNotifier {
         repeatDays: [0, 1, 2, 3, 4, 5, 6], // Every day
       ),
     ];
+
+    // Schedule all enabled alarms
+    for (final alarm in _alarms) {
+      if (alarm.isEnabled) {
+        _notificationService.scheduleAlarm(alarm);
+      }
+    }
   }
 
   void addAlarm(AlarmModel alarm) {
     _alarms.add(alarm);
+    if (alarm.isEnabled) {
+      _notificationService.scheduleAlarm(alarm);
+    }
     notifyListeners();
   }
 
@@ -41,6 +69,10 @@ class AlarmProvider with ChangeNotifier {
     final index = _alarms.indexWhere((alarm) => alarm.id == id);
     if (index != -1) {
       _alarms[index] = updatedAlarm;
+      _notificationService.cancelAlarm(id);
+      if (updatedAlarm.isEnabled) {
+        _notificationService.scheduleAlarm(updatedAlarm);
+      }
       notifyListeners();
     }
   }
@@ -49,11 +81,17 @@ class AlarmProvider with ChangeNotifier {
     final index = _alarms.indexWhere((alarm) => alarm.id == id);
     if (index != -1) {
       _alarms[index].isEnabled = !_alarms[index].isEnabled;
+      if (_alarms[index].isEnabled) {
+        _notificationService.scheduleAlarm(_alarms[index]);
+      } else {
+        _notificationService.cancelAlarm(id);
+      }
       notifyListeners();
     }
   }
 
   void deleteAlarm(String id) {
+    _notificationService.cancelAlarm(id);
     _alarms.removeWhere((alarm) => alarm.id == id);
     notifyListeners();
   }
