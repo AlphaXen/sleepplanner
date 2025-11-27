@@ -13,6 +13,13 @@ class AlarmScreen extends StatelessWidget {
         title: const Text('Alarms'),
         centerTitle: true,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'Alarm Info',
+            onPressed: () => _showAlarmInfo(context),
+          ),
+        ],
       ),
       body: Consumer<AlarmProvider>(
         builder: (context, alarmProvider, child) {
@@ -55,6 +62,61 @@ class AlarmScreen extends StatelessWidget {
         onPressed: () => _showAddAlarmDialog(context),
         icon: const Icon(Icons.add),
         label: const Text('Add Alarm'),
+      ),
+    );
+  }
+
+  void _showAlarmInfo(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.info, color: Colors.blue),
+            SizedBox(width: 8),
+            Text('Alarm Information'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '✅ Automatic Scheduling',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Your alarms are now scheduled to ring automatically at the specified time.',
+            ),
+            SizedBox(height: 16),
+            Text(
+              '🔔 How it works:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text('• Toggle ON to enable alarm\n'
+                '• Notification will appear at alarm time\n'
+                '• Tap notification to play alarm sound\n'
+                '• Use "Test Sound" to preview alarm\n'
+                '• Repeat days work automatically'),
+            SizedBox(height: 16),
+            Text(
+              '⚠️ Important:',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange),
+            ),
+            SizedBox(height: 8),
+            Text('• Keep app permissions enabled\n'
+                '• Don\'t clear app from recent apps\n'
+                '• Check battery optimization settings'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got it!'),
+          ),
+        ],
       ),
     );
   }
