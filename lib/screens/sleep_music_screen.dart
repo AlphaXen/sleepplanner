@@ -373,7 +373,7 @@ class _SoundCard extends StatelessWidget {
                   right: 8,
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
                     ),

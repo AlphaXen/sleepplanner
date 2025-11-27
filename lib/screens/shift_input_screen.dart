@@ -76,7 +76,7 @@ class _ShiftInputScreenState extends State<ShiftInputScreen> {
         child: Column(
           children: [
             DropdownButtonFormField<ShiftType>(
-              value: _type,
+              initialValue: _type,
               decoration: const InputDecoration(
                 labelText: '근무 타입 선택',
                 border: OutlineInputBorder(),
