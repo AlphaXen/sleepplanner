@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:audioplayers/audioplayers.dart';
 import '../models/alarm_model.dart';
 
 class AlarmNotificationService {
@@ -12,6 +13,7 @@ class AlarmNotificationService {
 
   final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
+  final AudioPlayer _alarmPlayer = AudioPlayer();
   bool _initialized = false;
 
   // Callback for when alarm notification is triggered
@@ -39,9 +41,12 @@ class AlarmNotificationService {
     await _notifications.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (details) {
-        // When user taps on notification
+        // When user taps on notification or notification appears
         if (details.payload != null) {
+          debugPrint('Alarm notification triggered: ${details.payload}');
           onAlarmTriggered?.call(details.payload!);
+          // Play alarm sound immediately
+          _playAlarmSound();
         }
       },
     );
@@ -173,5 +178,32 @@ class AlarmNotificationService {
 
   Future<List<PendingNotificationRequest>> getPendingAlarms() async {
     return await _notifications.pendingNotificationRequests();
+  }
+
+  // Play alarm sound
+  Future<void> _playAlarmSound() async {
+    try {
+      await _alarmPlayer.stop();
+      await _alarmPlayer.play(AssetSource('sounds/alarm.mp3'));
+      await _alarmPlayer.setReleaseMode(ReleaseMode.loop);
+      await _alarmPlayer.setVolume(1.0);
+      debugPrint('Alarm sound playing');
+    } catch (e) {
+      debugPrint('Error playing alarm sound: $e');
+    }
+  }
+
+  // Stop alarm sound
+  Future<void> stopAlarmSound() async {
+    try {
+      await _alarmPlayer.stop();
+      debugPrint('Alarm sound stopped');
+    } catch (e) {
+      debugPrint('Error stopping alarm sound: $e');
+    }
+  }
+
+  void dispose() {
+    _alarmPlayer.dispose();
   }
 }

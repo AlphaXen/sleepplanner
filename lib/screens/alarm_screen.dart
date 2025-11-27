@@ -103,7 +103,8 @@ class AlarmScreen extends StatelessWidget {
             SizedBox(height: 16),
             Text(
               '⚠️ Important:',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange),
+              style:
+                  TextStyle(fontWeight: FontWeight.bold, color: Colors.orange),
             ),
             SizedBox(height: 8),
             Text('• Keep app permissions enabled\n'

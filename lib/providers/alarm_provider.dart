@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../models/alarm_model.dart';
@@ -8,6 +9,8 @@ class AlarmProvider with ChangeNotifier {
   final AudioPlayer _alarmPlayer = AudioPlayer();
   final AlarmNotificationService _notificationService =
       AlarmNotificationService();
+  Timer? _alarmCheckTimer;
+  final Set<String> _triggeredToday = {};
 
   List<AlarmModel> get alarms => _alarms;
 
@@ -28,6 +31,54 @@ class AlarmProvider with ChangeNotifier {
     };
 
     _loadSampleAlarms();
+    _startAlarmChecker();
+  }
+
+  void _startAlarmChecker() {
+    // Check every 30 seconds for alarms
+    _alarmCheckTimer?.cancel();
+    _alarmCheckTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _checkForAlarms();
+    });
+    // Check immediately
+    _checkForAlarms();
+  }
+
+  void _checkForAlarms() {
+    final now = DateTime.now();
+    final currentTime = TimeOfDay(hour: now.hour, minute: now.minute);
+    final currentWeekday = now.weekday % 7; // 0=Sunday format
+
+    for (final alarm in _alarms) {
+      if (!alarm.isEnabled) continue;
+
+      // Check if alarm time matches (within same minute)
+      if (alarm.time.hour == currentTime.hour &&
+          alarm.time.minute == currentTime.minute) {
+        // Create unique key for today
+        final todayKey = '${alarm.id}_${now.year}_${now.month}_${now.day}';
+        if (_triggeredToday.contains(todayKey)) continue;
+
+        // Check repeat days
+        if (alarm.repeatDays.isEmpty ||
+            alarm.repeatDays.contains(currentWeekday)) {
+          debugPrint(
+              '🔔 ALARM RINGING: ${alarm.label} at ${alarm.formattedTime}');
+          playAlarmSound(alarm.soundPath);
+          _triggeredToday.add(todayKey);
+
+          // Auto-stop after 5 minutes
+          Future.delayed(const Duration(minutes: 5), () {
+            stopAlarmSound();
+          });
+        }
+      }
+    }
+
+    // Clear triggered list at midnight
+    if (now.hour == 0 && now.minute < 1) {
+      _triggeredToday.clear();
+    }
   }
 
   void _loadSampleAlarms() {
@@ -124,6 +175,7 @@ class AlarmProvider with ChangeNotifier {
 
   @override
   void dispose() {
+    _alarmCheckTimer?.cancel();
     _alarmPlayer.dispose();
     super.dispose();
   }
