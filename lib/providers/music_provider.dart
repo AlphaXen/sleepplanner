@@ -31,17 +31,27 @@ class MusicProvider with ChangeNotifier {
 
     _currentSound = sound;
 
-    // Note: In a real app, you would have actual audio files
-    // For demonstration, we'll simulate playback
     try {
-      // await _audioPlayer.play(AssetSource(sound.assetPath ?? 'sounds/default.mp3'));
-      // await _audioPlayer.setVolume(_volume);
-      // await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+      // Stop any currently playing sound
+      await _audioPlayer.stop();
+
+      // Play from URL if available, otherwise from asset
+      if (sound.url != null) {
+        await _audioPlayer.play(UrlSource(sound.url!));
+      } else if (sound.assetPath != null) {
+        await _audioPlayer.play(AssetSource(sound.assetPath!));
+      }
+
+      // Set volume and loop mode
+      await _audioPlayer.setVolume(_volume);
+      await _audioPlayer.setReleaseMode(ReleaseMode.loop);
 
       _isPlaying = true;
       notifyListeners();
     } catch (e) {
       debugPrint('Error playing sound: $e');
+      _isPlaying = false;
+      notifyListeners();
     }
   }
 
