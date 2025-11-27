@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/sleep_provider.dart';
 import '../models/sleep_entry.dart';
+import '../widgets/daily_tip_card.dart';
 import 'stats_screen.dart';
 import 'shift_input_screen.dart';
 import 'auto_reply_settings_screen.dart';
+import 'alarm_screen.dart';
+import 'sleep_music_screen.dart';
+import 'calendar_screen.dart';
+import 'daily_suggestions_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -57,6 +62,10 @@ class HomeScreen extends StatelessWidget {
           children: [
             _buildTodaySummary(
                 context, duration, progress, provider.dailyTargetHours),
+            const SizedBox(height: 16),
+            const DailyTipCard(),
+            const SizedBox(height: 16),
+            _buildFeatureGrid(context),
             const SizedBox(height: 16),
             _buildTargetEditor(context, provider),
             const SizedBox(height: 16),
@@ -122,6 +131,101 @@ class HomeScreen extends StatelessWidget {
                         : '오늘 목표까지 조금 더 잘 수 있습니다.',
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /* ===================== Feature Grid ====================== */
+
+  Widget _buildFeatureGrid(BuildContext context) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 1.5,
+      children: [
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AlarmScreen()),
+          ),
+          child: _buildFeatureCardWidget(
+            'Alarms',
+            Icons.alarm,
+            const [Color(0xFF667eea), Color(0xFF764ba2)],
+          ),
+        ),
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SleepMusicScreen()),
+          ),
+          child: _buildFeatureCardWidget(
+            'Sleep Music',
+            Icons.music_note,
+            const [Color(0xFF11998e), Color(0xFF38ef7d)],
+          ),
+        ),
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CalendarScreen()),
+          ),
+          child: _buildFeatureCardWidget(
+            'Calendar',
+            Icons.calendar_today,
+            const [Color(0xFFf093fb), Color(0xFFf5576c)],
+          ),
+        ),
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const DailySuggestionsScreen()),
+          ),
+          child: _buildFeatureCardWidget(
+            'Sleep Tips',
+            Icons.tips_and_updates,
+            const [Color(0xFF4facfe), Color(0xFF00f2fe)],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeatureCardWidget(
+      String title, IconData icon, List<Color> gradientColors) {
+    return Card(
+      elevation: 4,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: gradientColors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 40,
+              color: Colors.white,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
