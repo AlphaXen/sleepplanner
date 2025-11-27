@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../models/alarm_model.dart';
 
 class AlarmProvider with ChangeNotifier {
   List<AlarmModel> _alarms = [];
+  final AudioPlayer _alarmPlayer = AudioPlayer();
 
   List<AlarmModel> get alarms => _alarms;
 
@@ -60,4 +62,31 @@ class AlarmProvider with ChangeNotifier {
       _alarms.where((alarm) => alarm.isEnabled).toList();
 
   int get alarmCount => _alarms.length;
+
+  // Play alarm sound
+  Future<void> playAlarmSound(String soundPath) async {
+    try {
+      await _alarmPlayer.stop();
+      await _alarmPlayer.play(AssetSource(soundPath));
+      await _alarmPlayer.setReleaseMode(ReleaseMode.loop);
+      await _alarmPlayer.setVolume(1.0);
+    } catch (e) {
+      debugPrint('Error playing alarm sound: $e');
+    }
+  }
+
+  // Stop alarm sound
+  Future<void> stopAlarmSound() async {
+    try {
+      await _alarmPlayer.stop();
+    } catch (e) {
+      debugPrint('Error stopping alarm sound: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _alarmPlayer.dispose();
+    super.dispose();
+  }
 }
