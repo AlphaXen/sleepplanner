@@ -245,6 +245,54 @@ class _AlarmCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
+                // Test alarm sound button
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        final provider = Provider.of<AlarmProvider>(
+                          context,
+                          listen: false,
+                        );
+                        provider.playAlarmSound(alarm.soundPath);
+                        // Auto-stop after 10 seconds
+                        Future.delayed(const Duration(seconds: 10), () {
+                          provider.stopAlarmSound();
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Alarm sound playing (10 seconds)'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.play_arrow, size: 16),
+                      label: const Text('Test Sound'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Provider.of<AlarmProvider>(context, listen: false)
+                            .stopAlarmSound();
+                      },
+                      icon: const Icon(Icons.stop, size: 16),
+                      label: const Text('Stop'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
