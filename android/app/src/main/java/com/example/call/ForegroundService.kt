@@ -1,4 +1,4 @@
-package com.example.call
+package com.example.my_flutter_app
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -7,31 +7,36 @@ import android.app.Service
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.NotificationCompat
 
+/**
+ * A simple foreground service that shows a persistent notification while the
+ * auto‑reply feature is active.  Running as a foreground service helps prevent
+ * the system from killing our broadcast receivers and ensures the user is
+ * informed that automatic SMS replies may be sent.
+ */
 class ForegroundService : Service() {
 
-    private val channelId = "autoreply_service"
+    private val channelId = "auto_reply_service"
 
     override fun onCreate() {
         super.onCreate()
-        Log.d("ForegroundService", "Service created")
         createNotificationChannel()
-
-        // 앱 아이콘을 가져와 알림에 사용합니다.
-        val appIconId = applicationContext.applicationInfo.icon
+        // Use the application icon for the notification so it resolves in any
+        // package structure without referencing R directly.
+        val iconId = applicationContext.applicationInfo.icon
         val notification: Notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("자동응답 서비스 실행 중")
-            .setContentText("전화 감지 및 자동 문자 전송 활성화")
-            .setSmallIcon(appIconId)
+            .setContentTitle("Auto Reply Service Running")
+            .setContentText("Listening for incoming calls to send automatic replies.")
+            .setSmallIcon(iconId)
+            .setOngoing(true)
             .build()
-
         startForeground(1, notification)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d("ForegroundService", "Service started")
+        // Nothing else to do on each start; return STICKY so the system
+        // attempts to recreate the service if it's killed.
         return START_STICKY
     }
 
@@ -39,13 +44,14 @@ class ForegroundService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(
+            val channel = NotificationChannel(
                 channelId,
-                "자동응답 서비스 채널",
-                NotificationManager.IMPORTANCE_DEFAULT
+                "Auto Reply Service",
+                NotificationManager.IMPORTANCE_LOW
             )
+            channel.description = "Shows a persistent notification when auto reply is enabled."
             val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(serviceChannel)
+            manager.createNotificationChannel(channel)
         }
     }
 }
