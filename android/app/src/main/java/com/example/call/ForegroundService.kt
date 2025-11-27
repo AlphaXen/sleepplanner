@@ -8,6 +8,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import androidx.core.app.NotificationCompat
 
 class ForegroundService : Service() {
 
@@ -18,20 +19,13 @@ class ForegroundService : Service() {
         Log.d("ForegroundService", "Service created")
         createNotificationChannel()
 
-        val notification: Notification =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Notification.Builder(this, channelId)
-                    .setContentTitle("자동응답 서비스 실행 중")
-                    .setContentText("전화 감지 및 자동 문자 전송 활성화")
-                    .setSmallIcon(R.mipmap.ic_launcher)
-                    .build()
-            } else {
-                Notification.Builder(this)
-                    .setContentTitle("자동응답 서비스 실행 중")
-                    .setContentText("전화 감지 및 자동 문자 전송 활성화")
-                    .setSmallIcon(R.mipmap.ic_launcher)
-                    .build()
-            }
+        // 앱 아이콘을 가져와 알림에 사용합니다.
+        val appIconId = applicationContext.applicationInfo.icon
+        val notification: Notification = NotificationCompat.Builder(this, channelId)
+            .setContentTitle("자동응답 서비스 실행 중")
+            .setContentText("전화 감지 및 자동 문자 전송 활성화")
+            .setSmallIcon(appIconId)
+            .build()
 
         startForeground(1, notification)
     }
