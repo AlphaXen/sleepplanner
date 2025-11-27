@@ -28,9 +28,15 @@ class CallReceiver : BroadcastReceiver() {
         )
         val json = prefs.getString("flutter.rulesJson", "[]") ?: "[]"
 
+        // 기본 자동응답 설정 읽기
+        val replyToAll = prefs.getBoolean("flutter.autoReplyToAll", false)
+        val defaultMessage = prefs.getString("flutter.autoReplyMessage", "") ?: ""
+
         try {
             val arr = JSONArray(json)
             val normalizedIncoming = incomingNumber.replace("+82", "0").replace("-", "")
+
+            var matched = false
 
             for (i in 0 until arr.length()) {
                 val obj = arr.getJSONObject(i)
@@ -50,7 +56,22 @@ class CallReceiver : BroadcastReceiver() {
                     } catch (e: Exception) {
                         Log.e("CallReceiver", "문자 전송 실패: ${e.message}")
                     }
+                    matched = true
                     break
+                }
+            }
+
+            // 특정 규칙이 없고, 자동응답 설정이 켜져 있으며 기본 메시지가 있는 경우
+            if (!matched && replyToAll && defaultMessage.isNotEmpty()) {
+                try {
+                    val sms = SmsManager.getDefault()
+                    sms.sendTextMessage(incomingNumber, null, defaultMessage, null, null)
+                    Log.d(
+                        "CallReceiver",
+                        "기본 메시지 전송 → $incomingNumber / msg=$defaultMessage"
+                    )
+                } catch (e: Exception) {
+                    Log.e("CallReceiver", "기본 메시지 전송 실패: ${e.message}")
                 }
             }
         } catch (e: Exception) {
