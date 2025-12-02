@@ -6,14 +6,14 @@ import 'package:permission_handler/permission_handler.dart';
 import '../models/phone_rule_model.dart';
 import '../services/rules_db.dart';
 
-class AutoReplySettingsScreen extends StatefulWidget {
-  const AutoReplySettingsScreen({super.key});
+class RulesPage extends StatefulWidget {
+  const RulesPage({super.key});
 
   @override
-  State<AutoReplySettingsScreen> createState() => _AutoReplySettingsScreenState();
+  State<RulesPage> createState() => _RulesPageState();
 }
 
-class _AutoReplySettingsScreenState extends State<AutoReplySettingsScreen> {
+class _RulesPageState extends State<RulesPage> {
   static const platform = MethodChannel('com.example.call/autoreply');
 
   List<PhoneRule> _rules = [];

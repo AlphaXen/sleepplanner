@@ -18,6 +18,7 @@ class SoundOption {
   });
 }
 
+
 // Predefined sound options
 class SoundOptions {
   static const List<SoundOption> all = [
@@ -26,6 +27,7 @@ class SoundOptions {
       name: 'Rain',
       icon: '🌧️',
       gradientColors: [Color(0xFF667eea), Color(0xFF764ba2)],
+      url: 'https://youtu.be/o8GrqUSdzi0',
     ),
     SoundOption(
       id: 'ocean',

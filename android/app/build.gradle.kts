@@ -49,4 +49,7 @@ dependencies {
     // Required for desugaring support (used by some plugins such as
     // flutter_local_notifications which use newer Java APIs).
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
+    
+    // Sleep API - Google Play Services Location
+    implementation("com.google.android.gms:play-services-location:21.3.0")
 }

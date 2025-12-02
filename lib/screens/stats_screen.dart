@@ -40,7 +40,7 @@ class StatsScreen extends StatelessWidget {
                   child: LineChart(
                     LineChartData(
                       titlesData: FlTitlesData(
-                        leftTitles: AxisTitles(
+                        leftTitles: const AxisTitles(
                           sideTitles: SideTitles(showTitles: true),
                         ),
                         rightTitles: const AxisTitles(

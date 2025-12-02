@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../providers/sleep_provider.dart';
 import '../models/sleep_entry.dart';
 import '../widgets/daily_tip_card.dart';
+import '../services/sleep_api_service.dart';
 import 'stats_screen.dart';
 import 'shift_input_screen.dart';
 import 'auto_reply_settings_screen.dart';
@@ -56,21 +58,26 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _buildTodaySummary(
-                context, duration, progress, provider.dailyTargetHours),
-            const SizedBox(height: 16),
-            const DailyTipCard(),
-            const SizedBox(height: 16),
-            _buildFeatureGrid(context),
-            const SizedBox(height: 16),
-            _buildTargetEditor(context, provider),
-            const SizedBox(height: 16),
-            _buildEntryList(context),
-          ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _buildTodaySummary(
+                    context, duration, progress, provider.dailyTargetHours),
+                const SizedBox(height: 16),
+                const DailyTipCard(),
+                const SizedBox(height: 16),
+                _buildFeatureGrid(context),
+                const SizedBox(height: 16),
+                _buildTargetEditor(context, provider),
+                const SizedBox(height: 16),
+                _buildEntryList(context),
+                const SizedBox(height: 80),
+              ],
+            ),
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -267,33 +274,34 @@ class HomeScreen extends StatelessWidget {
   /* ===================== Entry List ====================== */
 
   Widget _buildEntryList(BuildContext context) {
-    return Expanded(
-      child: Consumer<SleepProvider>(
-        builder: (context, provider, _) {
-          if (provider.entries.isEmpty) {
-            return const Center(
-              child: Text(
-                'No sleep records yet.\nTap + to add.',
-                textAlign: TextAlign.center,
-              ),
-            );
-          }
-          return ListView.builder(
-            itemCount: provider.entries.length,
-            itemBuilder: (context, index) {
-              final e = provider.entries[index];
-              return ListTile(
-                leading:
-                    Icon(e.isNightShift ? Icons.dark_mode : Icons.wb_sunny),
-                title: Text(
-                  '${_formatDateTime(e.sleepTime)} → ${_formatDateTime(e.wakeTime)}',
-                ),
-                subtitle: Text('Duration: ${e.formattedDuration}'),
-              );
-            },
+    return Consumer<SleepProvider>(
+      builder: (context, provider, _) {
+        if (provider.entries.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(32.0),
+            child: Text(
+              'No sleep records yet.\nTap + to add.',
+              textAlign: TextAlign.center,
+            ),
           );
-        },
-      ),
+        }
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: provider.entries.length,
+          itemBuilder: (context, index) {
+            final e = provider.entries[index];
+            return ListTile(
+              leading:
+                  Icon(e.isNightShift ? Icons.dark_mode : Icons.wb_sunny),
+              title: Text(
+                '${_formatDateTime(e.sleepTime)} → ${_formatDateTime(e.wakeTime)}',
+              ),
+              subtitle: Text('Duration: ${e.formattedDuration}'),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -311,40 +319,59 @@ class HomeScreen extends StatelessWidget {
           builder: (context, setState) {
             return AlertDialog(
               title: const Text('Add Sleep Entry'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildDateTimePicker(
-                    context: context,
-                    label: 'Sleep Time',
-                    value: sleepTime,
-                    onTap: () async {
-                      final result = await _pickDateTime(context);
-                      if (result != null) setState(() => sleepTime = result);
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  _buildDateTimePicker(
-                    context: context,
-                    label: 'Wake Time',
-                    value: wakeTime,
-                    onTap: () async {
-                      final result = await _pickDateTime(context);
-                      if (result != null) setState(() => wakeTime = result);
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Text('Night shift sleep?'),
-                      const Spacer(),
-                      Switch(
-                        value: isNightShift,
-                        onChanged: (v) => setState(() => isNightShift = v),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          await _loadSleepApiData(context, setState, (sleep, wake) {
+                            sleepTime = sleep;
+                            wakeTime = wake;
+                          });
+                        },
+                        icon: const Icon(Icons.auto_awesome, size: 18),
+                        label: const Text('Load from Sleep API'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildDateTimePicker(
+                      context: context,
+                      label: 'Sleep Time',
+                      value: sleepTime,
+                      onTap: () async {
+                        final result = await _pickDateTime(context);
+                        if (result != null) setState(() => sleepTime = result);
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    _buildDateTimePicker(
+                      context: context,
+                      label: 'Wake Time',
+                      value: wakeTime,
+                      onTap: () async {
+                        final result = await _pickDateTime(context);
+                        if (result != null) setState(() => wakeTime = result);
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Text('Night shift sleep?'),
+                        const Spacer(),
+                        Switch(
+                          value: isNightShift,
+                          onChanged: (v) => setState(() => isNightShift = v),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
@@ -417,4 +444,54 @@ class HomeScreen extends StatelessWidget {
   }
 
   String _two(int v) => v.toString().padLeft(2, '0');
+
+  /* ===================== Sleep API 데이터 로드 ====================== */
+
+  Future<void> _loadSleepApiData(
+    BuildContext dialogContext,
+    StateSetter setState,
+    Function(DateTime, DateTime) onDataLoaded,
+  ) async {
+    var status = await Permission.activityRecognition.status;
+    if (!status.isGranted) {
+      status = await Permission.activityRecognition.request();
+    }
+
+    if (!status.isGranted) {
+      ScaffoldMessenger.of(dialogContext).showSnackBar(
+        const SnackBar(content: Text('Activity Recognition permission required')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: dialogContext,
+      barrierDismissible: false,
+      builder: (ctx) => const Center(child: CircularProgressIndicator()),
+    );
+
+    await SleepApiService.instance.requestSleepUpdates();
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    final apiData = await SleepApiService.instance.getLatestSleepData();
+
+    Navigator.pop(dialogContext);
+
+    if (apiData != null) {
+      setState(() {
+        onDataLoaded(apiData['sleepTime']!, apiData['wakeTime']!);
+      });
+      ScaffoldMessenger.of(dialogContext).showSnackBar(
+        const SnackBar(content: Text('Loaded data from Google Sleep API')),
+      );
+    } else {
+      final defaultData = SleepApiService.instance.getDefaultEstimate();
+      setState(() {
+        onDataLoaded(defaultData['sleepTime']!, defaultData['wakeTime']!);
+      });
+      ScaffoldMessenger.of(dialogContext).showSnackBar(
+        const SnackBar(content: Text('No API data found. Using default values')),
+      );
+    }
+  }
 }

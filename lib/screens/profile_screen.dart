@@ -71,7 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: chronotype,
+              initialValue: chronotype,
               decoration: const InputDecoration(
                 labelText: 'Chronotype',
                 border: OutlineInputBorder(),

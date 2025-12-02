@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class CalendarProvider with ChangeNotifier {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  Map<DateTime, double> _sleepData = {};
+  final Map<DateTime, double> _sleepData = {};
 
   DateTime get focusedDay => _focusedDay;
   DateTime? get selectedDay => _selectedDay;
