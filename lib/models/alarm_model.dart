@@ -6,6 +6,7 @@ class AlarmModel {
   final String label;
   bool isEnabled;
   final List<int> repeatDays; // 0=Sunday, 1=Monday, etc.
+  final String soundPath; // Path to alarm sound
 
   AlarmModel({
     required this.id,
@@ -13,6 +14,7 @@ class AlarmModel {
     required this.label,
     this.isEnabled = true,
     this.repeatDays = const [],
+    this.soundPath = 'sounds/alarm.mp3',
   });
 
   AlarmModel copyWith({
@@ -21,6 +23,7 @@ class AlarmModel {
     String? label,
     bool? isEnabled,
     List<int>? repeatDays,
+    String? soundPath,
   }) {
     return AlarmModel(
       id: id ?? this.id,
@@ -28,6 +31,7 @@ class AlarmModel {
       label: label ?? this.label,
       isEnabled: isEnabled ?? this.isEnabled,
       repeatDays: repeatDays ?? this.repeatDays,
+      soundPath: soundPath ?? this.soundPath,
     );
   }
 
@@ -39,6 +43,7 @@ class AlarmModel {
       'label': label,
       'isEnabled': isEnabled,
       'repeatDays': repeatDays,
+      'soundPath': soundPath,
     };
   }
 
@@ -52,6 +57,7 @@ class AlarmModel {
       label: json['label'] as String,
       isEnabled: json['isEnabled'] as bool? ?? true,
       repeatDays: List<int>.from(json['repeatDays'] as List? ?? []),
+      soundPath: json['soundPath'] as String? ?? 'sounds/alarm.mp3',
     );
   }
 

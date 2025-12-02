@@ -33,3 +33,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/sounds/rain.mp3
+    - assets/sounds/ocean.mp3
+    - assets/sounds/forest.mp3
+    - assets/sounds/whitenoise.mp3
+    - assets/sounds/meditation.mp3
+    - assets/sounds/crickets.mp3
+    - assets/sounds/alarm.mp3
