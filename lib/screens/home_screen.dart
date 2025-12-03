@@ -304,8 +304,7 @@ class HomeScreen extends StatelessWidget {
           itemBuilder: (context, index) {
             final e = provider.entries[index];
             return ListTile(
-              leading:
-                  Icon(e.isNightShift ? Icons.dark_mode : Icons.wb_sunny),
+              leading: Icon(e.isNightShift ? Icons.dark_mode : Icons.wb_sunny),
               title: Text(
                 '${_formatDateTime(e.sleepTime)} → ${_formatDateTime(e.wakeTime)}',
               ),
@@ -339,7 +338,8 @@ class HomeScreen extends StatelessWidget {
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         onPressed: () async {
-                          await _loadSleepApiData(context, setState, (sleep, wake) {
+                          await _loadSleepApiData(context, setState,
+                              (sleep, wake) {
                             sleepTime = sleep;
                             wakeTime = wake;
                           });
@@ -471,7 +471,8 @@ class HomeScreen extends StatelessWidget {
 
     if (!status.isGranted) {
       ScaffoldMessenger.of(dialogContext).showSnackBar(
-        const SnackBar(content: Text('Activity Recognition permission required')),
+        const SnackBar(
+            content: Text('Activity Recognition permission required')),
       );
       return;
     }
@@ -502,7 +503,8 @@ class HomeScreen extends StatelessWidget {
         onDataLoaded(defaultData['sleepTime']!, defaultData['wakeTime']!);
       });
       ScaffoldMessenger.of(dialogContext).showSnackBar(
-        const SnackBar(content: Text('No API data found. Using default values')),
+        const SnackBar(
+            content: Text('No API data found. Using default values')),
       );
     }
   }
