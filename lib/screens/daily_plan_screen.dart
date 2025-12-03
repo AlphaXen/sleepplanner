@@ -7,8 +7,8 @@ class DailyPlanScreen extends StatelessWidget {
   const DailyPlanScreen({super.key});
 
   String _fmt(DateTime dt) {
-    return "\${dt.year}-\${dt.month.toString().padLeft(2, '0')}-\${dt.day.toString().padLeft(2, '0')} "
-        "\${dt.hour.toString().padLeft(2, '0')}:\${dt.minute.toString().padLeft(2, '0')}";
+    return "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} "
+        "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
   }
 
   @override
@@ -51,21 +51,34 @@ class DailyPlanScreen extends StatelessWidget {
     final h = dur.inHours;
     final m = dur.inMinutes.remainder(60);
 
-    return const Card(
+    return Card(
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               "🛌 메인 수면 시간",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Roboto',
+              ),
             ),
-            SizedBox(height: 12),
-            Text("Start: \${_fmt(plan.mainSleepStart)}"),
-            Text("End:   \${_fmt(plan.mainSleepEnd)}"),
-            SizedBox(height: 8),
-            Text("Duration: \${h}h \${m}m"),
+            const SizedBox(height: 12),
+            Text(
+              "Start: ${_fmt(plan.mainSleepStart)}",
+              style: const TextStyle(fontFamily: 'Roboto'),
+            ),
+            Text(
+              "End:   ${_fmt(plan.mainSleepEnd)}",
+              style: const TextStyle(fontFamily: 'Roboto'),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Duration: ${h}h ${m}m",
+              style: const TextStyle(fontFamily: 'Roboto'),
+            ),
           ],
         ),
       ),
@@ -75,17 +88,24 @@ class DailyPlanScreen extends StatelessWidget {
   Widget _buildCaffeineCard(DailyPlan plan) {
     return Card(
       color: Colors.orange.withOpacity(0.1),
-      child: const Padding(
-        padding: EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               "☕ 카페인 컷오프",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Roboto',
+              ),
             ),
-            SizedBox(height: 12),
-            Text("카페인 제한 시작 시간: \${_fmt(plan.caffeineCutoff)}"),
+            const SizedBox(height: 12),
+            Text(
+              "카페인 제한 시작 시간: ${_fmt(plan.caffeineCutoff)}",
+              style: const TextStyle(fontFamily: 'Roboto'),
+            ),
           ],
         ),
       ),
@@ -95,17 +115,24 @@ class DailyPlanScreen extends StatelessWidget {
   Widget _buildWinddownCard(DailyPlan plan) {
     return Card(
       color: Colors.blue.withOpacity(0.1),
-      child: const Padding(
-        padding: EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               "🌙 취침 준비 시작 시간",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Roboto',
+              ),
             ),
-            SizedBox(height: 12),
-            Text("Wind-down 시작: \${_fmt(plan.winddownStart)}"),
+            const SizedBox(height: 12),
+            Text(
+              "Wind-down 시작: ${_fmt(plan.winddownStart)}",
+              style: const TextStyle(fontFamily: 'Roboto'),
+            ),
           ],
         ),
       ),
@@ -122,11 +149,18 @@ class DailyPlanScreen extends StatelessWidget {
           children: [
             const Text(
               "💡 빛 노출 전략",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Roboto',
+              ),
             ),
             const SizedBox(height: 12),
             ...plan.lightPlan.entries.map(
-              (e) => const Text("- \${e.key}: \${e.value}"),
+              (e) => Text(
+                "- ${e.key}: ${e.value}",
+                style: const TextStyle(fontFamily: 'Roboto'),
+              ),
             ),
           ],
         ),
@@ -144,13 +178,20 @@ class DailyPlanScreen extends StatelessWidget {
           children: [
             const Text(
               "📝 Notes",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Roboto',
+              ),
             ),
             const SizedBox(height: 12),
             ...plan.notes.map(
-              (n) => const Padding(
-                padding: EdgeInsets.only(bottom: 6),
-                child: Text("- \$n"),
+              (n) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text(
+                  "- $n",
+                  style: const TextStyle(fontFamily: 'Roboto'),
+                ),
               ),
             ),
           ],

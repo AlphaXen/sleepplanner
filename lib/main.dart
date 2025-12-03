@@ -8,6 +8,7 @@ import 'providers/theme_provider.dart';
 import 'providers/alarm_provider.dart';
 import 'providers/music_provider.dart';
 import 'providers/calendar_provider.dart';
+import 'providers/env_provider.dart';
 import 'screens/home_screen.dart';
 
 Future<void> main() async {
@@ -45,6 +46,7 @@ class SleepPlannerApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AlarmProvider()),
         ChangeNotifierProvider(create: (_) => MusicProvider()),
         ChangeNotifierProvider(create: (_) => CalendarProvider()),
+        ChangeNotifierProvider(create: (_) => EnvProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, theme, _) {
