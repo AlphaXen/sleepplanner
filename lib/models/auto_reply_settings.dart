@@ -1,16 +1,16 @@
 class AutoReplySettings {
-  /// Auto reply 기능 ON/OFF
+  /// Auto reply feature ON/OFF
   bool enabled;
 
-  /// 사용자가 직접 입력하는 자동응답 메시지
+  /// Custom auto-reply message entered by user
   String replyMessage;
 
-  /// 자동응답을 허용할 연락처 목록 (이름 또는 번호)
+  /// List of contacts allowed for auto-reply (name or number)
   List<String> allowedContacts;
 
   AutoReplySettings({
     this.enabled = false,
-    this.replyMessage = "지금은 수면 중입니다. 나중에 연락드릴게요.",
+    this.replyMessage = "I'm currently sleeping. I'll get back to you later.",
     this.allowedContacts = const [],
   });
 

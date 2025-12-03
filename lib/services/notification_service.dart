@@ -32,7 +32,7 @@ class NotificationService {
     await _plugin.show(
       0,
       'Sleep goal reached 😴',
-      '오늘 설정한 수면 목표를 달성했습니다.',
+      'You have achieved today\'s sleep goal.',
       details,
     );
   }

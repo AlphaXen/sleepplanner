@@ -23,7 +23,7 @@ class DailyPlanScreen extends StatelessWidget {
       body: plan == null
           ? const Center(
               child: Text(
-                "아직 Daily Plan 이 없습니다.\n근무 정보를 입력해 계산하세요.",
+                "No Daily Plan yet.\nEnter your work schedule to calculate.",
                 textAlign: TextAlign.center,
               ),
             )
@@ -58,7 +58,7 @@ class DailyPlanScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "🛌 메인 수면 시간",
+              "🛌 Main Sleep Time",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 12),
@@ -81,11 +81,11 @@ class DailyPlanScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "☕ 카페인 컷오프",
+              "☕ Caffeine Cutoff",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 12),
-            Text("카페인 제한 시작 시간: \${_fmt(plan.caffeineCutoff)}"),
+            Text("Caffeine cutoff time: \${_fmt(plan.caffeineCutoff)}"),
           ],
         ),
       ),
@@ -101,11 +101,11 @@ class DailyPlanScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "🌙 취침 준비 시작 시간",
+              "🌙 Wind-down Start Time",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 12),
-            Text("Wind-down 시작: \${_fmt(plan.winddownStart)}"),
+            Text("Wind-down starts: \${_fmt(plan.winddownStart)}"),
           ],
         ),
       ),
@@ -121,7 +121,7 @@ class DailyPlanScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "💡 빛 노출 전략",
+              "💡 Light Exposure Strategy",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),

@@ -65,7 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextField(
               controller: nameCtrl,
               decoration: const InputDecoration(
-                labelText: '이름',
+                labelText: 'Name',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -77,20 +77,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 border: OutlineInputBorder(),
               ),
               items: const [
-                DropdownMenuItem(value: 'morning', child: Text('아침형')),
-                DropdownMenuItem(value: 'evening', child: Text('저녁형')),
-                DropdownMenuItem(value: 'neutral', child: Text('보통')),
+                DropdownMenuItem(value: 'morning', child: Text('Morning Person')),
+                DropdownMenuItem(value: 'evening', child: Text('Night Owl')),
+                DropdownMenuItem(value: 'neutral', child: Text('Neutral')),
               ],
               onChanged: (v) => setState(() => chronotype = v ?? 'neutral'),
             ),
             const SizedBox(height: 16),
-            Text('카페인 민감도: ${cafSens.toStringAsFixed(2)}'),
+            Text('Caffeine Sensitivity: ${cafSens.toStringAsFixed(2)}'),
             Slider(
               value: cafSens,
               onChanged: (v) => setState(() => cafSens = v),
             ),
             const SizedBox(height: 16),
-            Text('빛 민감도: ${lightSens.toStringAsFixed(2)}'),
+            Text('Light Sensitivity: ${lightSens.toStringAsFixed(2)}'),
             Slider(
               value: lightSens,
               onChanged: (v) => setState(() => lightSens = v),

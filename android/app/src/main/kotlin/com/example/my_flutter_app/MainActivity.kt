@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.NonNull
+import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -15,6 +16,7 @@ class MainActivity : FlutterActivity() {
 
     private val CHANNEL_AUTOREPLY = "com.example.call/autoreply"
     private val CHANNEL_SLEEP = "com.example.sleep_tracker/sleep"
+    private val CHANNEL_LIGHT = "light_guide_channel"
     private val REQUEST_CODE = 100
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
@@ -54,6 +56,47 @@ class MainActivity : FlutterActivity() {
                     }
                 } else {
                     result.notImplemented()
+                }
+            }
+
+        // Environment Checker (Light/Noise) 채널
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL_LIGHT)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "startLightService" -> {
+                        try {
+                            val intent = Intent(this, LightMonitorService::class.java)
+                            ContextCompat.startForegroundService(this, intent)
+                            result.success(null)
+                        } catch (e: Exception) {
+                            android.util.Log.e("MainActivity", "Failed to start LightMonitorService", e)
+                            result.error("SERVICE_ERROR", e.message, null)
+                        }
+                    }
+                    "stopLightService" -> {
+                        try {
+                            stopService(Intent(this, LightMonitorService::class.java))
+                            result.success(null)
+                        } catch (e: Exception) {
+                            result.error("SERVICE_ERROR", e.message, null)
+                        }
+                    }
+                    "getEnvSamples" -> {
+                        try {
+                            val copy = LightMonitorService.getSamplesSnapshotAndClear()
+                            val list = copy.map {
+                                mapOf(
+                                    "timestampMillis" to it.timestampMillis,
+                                    "lux" to it.lux,
+                                    "noiseDb" to it.noiseDb
+                                )
+                            }
+                            result.success(list)
+                        } catch (e: Exception) {
+                            result.error("DATA_ERROR", e.message, null)
+                        }
+                    }
+                    else -> result.notImplemented()
                 }
             }
     }

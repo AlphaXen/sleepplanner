@@ -69,7 +69,7 @@ class _ShiftInputScreenState extends State<ShiftInputScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('오늘 근무 정보 입력'),
+        title: const Text('Enter Work Schedule'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -78,21 +78,21 @@ class _ShiftInputScreenState extends State<ShiftInputScreen> {
             DropdownButtonFormField<ShiftType>(
               initialValue: _type,
               decoration: const InputDecoration(
-                labelText: '근무 타입 선택',
+                labelText: 'Select Shift Type',
                 border: OutlineInputBorder(),
               ),
               items: const [
                 DropdownMenuItem(
                   value: ShiftType.day,
-                  child: Text('주간 근무 (DAY)'),
+                  child: Text('Day Shift (DAY)'),
                 ),
                 DropdownMenuItem(
                   value: ShiftType.night,
-                  child: Text('야간 근무 (NIGHT)'),
+                  child: Text('Night Shift (NIGHT)'),
                 ),
                 DropdownMenuItem(
                   value: ShiftType.off,
-                  child: Text('휴무 (OFF)'),
+                  child: Text('Day Off (OFF)'),
                 ),
               ],
               onChanged: (v) {
@@ -103,35 +103,35 @@ class _ShiftInputScreenState extends State<ShiftInputScreen> {
             const SizedBox(height: 16),
             if (_type != ShiftType.off) ...[
               _buildTile(
-                title: '출근 시간 (Shift Start)',
+                title: 'Shift Start Time',
                 value: _shiftStart,
                 onTap: () async {
                   final dt = await _pickDateTime(
                     context,
-                    help: '출근 시간 선택',
+                    help: 'Select shift start time',
                   );
                   if (dt != null) setState(() => _shiftStart = dt);
                 },
               ),
               _buildTile(
-                title: '퇴근 시간 (Shift End)',
+                title: 'Shift End Time',
                 value: _shiftEnd,
                 onTap: () async {
                   final dt = await _pickDateTime(
                     context,
-                    help: '퇴근 시간 선택',
+                    help: 'Select shift end time',
                   );
                   if (dt != null) setState(() => _shiftEnd = dt);
                 },
               ),
             ] else ...[
               _buildTile(
-                title: '휴무일 선호 Mid-sleep 시간',
+                title: 'Preferred Mid-sleep Time (Day Off)',
                 value: _preferredMid,
                 onTap: () async {
                   final dt = await _pickDateTime(
                     context,
-                    help: 'Mid-sleep 시간 선택',
+                    help: 'Select mid-sleep time',
                   );
                   if (dt != null) setState(() => _preferredMid = dt);
                 },
@@ -142,7 +142,7 @@ class _ShiftInputScreenState extends State<ShiftInputScreen> {
               width: double.infinity,
               child: FilledButton(
                 onPressed: _submit,
-                child: const Text('Daily Plan 계산하기'),
+                child: const Text('Calculate Daily Plan'),
               ),
             ),
           ],
@@ -158,7 +158,7 @@ class _ShiftInputScreenState extends State<ShiftInputScreen> {
   }) {
     String subtitle;
     if (value == null) {
-      subtitle = '선택하세요...';
+      subtitle = 'Select...';
     } else {
       subtitle =
           '${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')} '

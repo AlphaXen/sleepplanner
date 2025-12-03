@@ -125,12 +125,12 @@ class StatsScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      '오늘 수면 목표 달성률',
+                      'Today\'s Sleep Goal Progress',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
-                    Text('완료: ${complete.toStringAsFixed(1)} %'),
-                    Text('남은 비율: ${remaining.toStringAsFixed(1)} %'),
+                    Text('Completed: ${complete.toStringAsFixed(1)} %'),
+                    Text('Remaining: ${remaining.toStringAsFixed(1)} %'),
                   ],
                 ),
               ),

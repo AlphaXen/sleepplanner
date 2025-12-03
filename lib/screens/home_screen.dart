@@ -12,6 +12,7 @@ import 'alarm_screen.dart';
 import 'sleep_music_screen.dart';
 import 'calendar_screen.dart';
 import 'daily_suggestions_screen.dart';
+import 'environment_checker_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -26,7 +27,7 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Sleep Planner'),
         actions: [
-          // 🔥 Auto Reply Settings Screen 이동 버튼
+          // Auto Reply Settings Screen button
           IconButton(
             icon: const Icon(Icons.message_outlined),
             tooltip: 'Auto Reply Settings',
@@ -40,7 +41,7 @@ class HomeScreen extends StatelessWidget {
 
           IconButton(
             icon: const Icon(Icons.show_chart),
-            tooltip: '통계/그래프',
+            tooltip: 'Stats/Graphs',
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const StatsScreen()),
@@ -134,8 +135,8 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     progress >= 1
-                        ? '목표 수면시간을 달성했습니다! 😴'
-                        : '오늘 목표까지 조금 더 잘 수 있습니다.',
+                        ? 'You achieved your sleep goal! 😴'
+                        : 'A bit more sleep to reach today\'s goal.',
                   ),
                 ],
               ),
@@ -199,6 +200,17 @@ class HomeScreen extends StatelessWidget {
             'Sleep Tips',
             Icons.tips_and_updates,
             const [Color(0xFF4facfe), Color(0xFF00f2fe)],
+          ),
+        ),
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const EnvironmentCheckerScreen()),
+          ),
+          child: _buildFeatureCardWidget(
+            'Environment',
+            Icons.nightlight_round,
+            const [Color(0xFF2c3e50), Color(0xFF4ca1af)],
           ),
         ),
       ],
