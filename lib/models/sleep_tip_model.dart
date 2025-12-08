@@ -17,51 +17,40 @@ class SleepTip {
 }
 
 class SleepTips {
-  // Time-based dynamic tips
-  static SleepTip getTimeBasedTip() {
-    final hour = DateTime.now().hour;
-
-    if (hour >= 5 && hour < 12) {
-      return const SleepTip(
-        title: '☀️ Morning Sunlight',
-        description:
-            'Get 10-15 minutes of natural sunlight within an hour of waking up to regulate your circadian rhythm.',
-        icon: Icons.wb_sunny,
-        timeLabel: 'Morning Routine',
-        gradientColors: [Color(0xFFf093fb), Color(0xFFf5576c)],
-      );
-    } else if (hour >= 12 && hour < 16) {
-      return const SleepTip(
-        title: '☕ Caffeine Cutoff',
-        description:
-            'Avoid caffeine after 2 PM. Caffeine has a half-life of 5-6 hours and can disrupt your sleep.',
-        icon: Icons.coffee,
-        timeLabel: 'Afternoon Alert',
-        gradientColors: [Color(0xFF667eea), Color(0xFF764ba2)],
-      );
-    } else if (hour >= 16 && hour < 21) {
-      return const SleepTip(
-        title: '🌙 Wind Down',
-        description:
-            'Start your bedtime routine 1-2 hours before sleep. Dim lights and reduce screen time.',
-        icon: Icons.nightlight_round,
-        timeLabel: 'Evening Prep',
-        gradientColors: [Color(0xFF11998e), Color(0xFF38ef7d)],
-      );
-    } else {
-      return const SleepTip(
-        title: '😴 Sleep Time',
-        description:
-            'Your bedroom should be cool (60-67°F), dark, and quiet. Consider using a sleep mask or white noise.',
-        icon: Icons.bedtime,
-        timeLabel: 'Night Time',
-        gradientColors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
-      );
-    }
-  }
-
-  // Sleep hygiene recommendations
-  static const List<SleepTip> hygieneRecommendations = [
+  // All available tips for auto-rotation
+  static const List<SleepTip> _allTips = [
+    SleepTip(
+      title: '☀️ Morning Sunlight',
+      description:
+          'Get 10-15 minutes of natural sunlight within an hour of waking up to regulate your circadian rhythm.',
+      icon: Icons.wb_sunny,
+      timeLabel: 'Morning Routine',
+      gradientColors: [Color(0xFFf093fb), Color(0xFFf5576c)],
+    ),
+    SleepTip(
+      title: '☕ Caffeine Cutoff',
+      description:
+          'Avoid caffeine after 2 PM. Caffeine has a half-life of 5-6 hours and can disrupt your sleep.',
+      icon: Icons.coffee,
+      timeLabel: 'Afternoon Alert',
+      gradientColors: [Color(0xFF667eea), Color(0xFF764ba2)],
+    ),
+    SleepTip(
+      title: '🌙 Wind Down',
+      description:
+          'Start your bedtime routine 1-2 hours before sleep. Dim lights and reduce screen time.',
+      icon: Icons.nightlight_round,
+      timeLabel: 'Evening Prep',
+      gradientColors: [Color(0xFF11998e), Color(0xFF38ef7d)],
+    ),
+    SleepTip(
+      title: '😴 Sleep Time',
+      description:
+          'Your bedroom should be cool (60-67°F), dark, and quiet. Consider using a sleep mask or white noise.',
+      icon: Icons.bedtime,
+      timeLabel: 'Night Time',
+      gradientColors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+    ),
     SleepTip(
       title: '⏰ Consistent Schedule',
       description:
@@ -110,10 +99,6 @@ class SleepTips {
       timeLabel: 'Environment',
       gradientColors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
     ),
-  ];
-
-  // Best practices for sleep
-  static const List<SleepTip> bestPractices = [
     SleepTip(
       title: '🛏️ Bed = Sleep',
       description:
@@ -163,4 +148,53 @@ class SleepTips {
       gradientColors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
     ),
   ];
+
+  /// Get time-based tip based on current hour
+  static SleepTip getTimeBasedTip() {
+    final hour = DateTime.now().hour;
+
+    if (hour >= 5 && hour < 12) {
+      return _allTips[0]; // Morning Sunlight
+    } else if (hour >= 12 && hour < 16) {
+      return _allTips[1]; // Caffeine Cutoff
+    } else if (hour >= 16 && hour < 21) {
+      return _allTips[2]; // Wind Down
+    } else {
+      return _allTips[3]; // Sleep Time
+    }
+  }
+
+  /// Get rotating tip based on time (changes every 10 seconds for demo)
+  static SleepTip getRotatingTip() {
+    final totalSeconds = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final index = totalSeconds % _allTips.length;
+    return _allTips[index];
+  }
+
+  /// Get random tip from all available tips
+  static SleepTip getRandomTip() {
+    final random = DateTime.now().microsecond % _allTips.length;
+    return _allTips[random];
+  }
+
+  /// Get next tip in sequence (useful for manual navigation)
+  static SleepTip getNextTip(SleepTip currentTip) {
+    final currentIndex = _allTips.indexOf(currentTip);
+    final nextIndex = (currentIndex + 1) % _allTips.length;
+    return _allTips[nextIndex];
+  }
+
+  /// Get previous tip in sequence
+  static SleepTip getPreviousTip(SleepTip currentTip) {
+    final currentIndex = _allTips.indexOf(currentTip);
+    final previousIndex = (currentIndex - 1 + _allTips.length) % _allTips.length;
+    return _allTips[previousIndex];
+  }
+
+
+  // Sleep hygiene recommendations (legacy - use getRandomTip or getRotatingTip instead)
+  static List<SleepTip> get hygieneRecommendations => _allTips;
+
+  // Best practices for sleep (legacy - use getRandomTip or getRotatingTip instead)
+  static List<SleepTip> get bestPractices => _allTips;
 }

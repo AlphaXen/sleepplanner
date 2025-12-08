@@ -12,9 +12,9 @@ class SleepEntry {
   Duration get duration => wakeTime.difference(sleepTime);
 
   String get formattedDuration {
-    final h = duration.inHours;
-    final m = duration.inMinutes.remainder(60);
-    return '\${h}h \${m}m';
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    return '${hours}h ${minutes}m';
   }
 
   DateTime get dateKey => DateTime(sleepTime.year, sleepTime.month, sleepTime.day);

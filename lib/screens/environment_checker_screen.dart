@@ -869,7 +869,7 @@ class LuxNoiseDetailPage extends StatelessWidget {
                               return touchedSpots.map((spot) {
                                 return LineTooltipItem(
                                   '${spot.y.toStringAsFixed(1)} $unit',
-                                  TextStyle(
+                                  const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -899,7 +899,7 @@ class LuxNoiseDetailPage extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '${value.toStringAsFixed(1)}',
+          value.toStringAsFixed(1),
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,

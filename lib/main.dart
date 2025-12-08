@@ -10,27 +10,39 @@ import 'providers/music_provider.dart';
 import 'providers/calendar_provider.dart';
 import 'providers/env_provider.dart';
 import 'screens/home_screen.dart';
+import 'screens/onboarding_screen.dart';
+import 'services/onboarding_service.dart';
+import 'utils/app_logger.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize timezone for alarm scheduling
-  tz.initializeTimeZones();
+  _initializeTimezone();
 
-  try {
-    await Firebase.initializeApp(); // firebase_options.dart 쓰면 옵션 추가
-  } catch (e, st) {
-    // If native Firebase config is missing (google-services.json / plist),
-    // initialization will fail on mobile. Catch and continue so the app
-    // can still run without Firebase during development.
-    // Log the error for debugging.
-    // ignore: avoid_print
-    print('Firebase initialization failed: $e');
-    // ignore: avoid_print
-    print(st);
-  }
+  // Initialize Firebase
+  await _initializeFirebase();
 
   runApp(const SleepPlannerApp());
+}
+
+void _initializeTimezone() {
+  try {
+    tz.initializeTimeZones();
+    AppLogger.info('Timezone initialized successfully');
+  } catch (e) {
+    AppLogger.error('Failed to initialize timezone', e);
+  }
+}
+
+Future<void> _initializeFirebase() async {
+  try {
+    await Firebase.initializeApp();
+    AppLogger.info('Firebase initialized successfully');
+  } catch (e) {
+    AppLogger.warn(
+        'Firebase initialization failed. App will continue without Firebase. $e');
+  }
 }
 
 class SleepPlannerApp extends StatelessWidget {
@@ -67,12 +79,48 @@ class SleepPlannerApp extends StatelessWidget {
               ),
               useMaterial3: true,
             ),
-            themeMode: theme.mode, // 🌗 Dark/Light Mode here
-            home: const HomeScreen(),
+            themeMode: theme.mode,
+            home: const _HomeRouter(),
           );
         },
       ),
     );
   }
 }
-// End of file lib/main.dart
+
+class _HomeRouter extends StatelessWidget {
+  const _HomeRouter();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: OnboardingService.isOnboardingCompleted(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        final isOnboardingCompleted = snapshot.data ?? false;
+
+        if (isOnboardingCompleted) {
+          return const HomeScreen();
+        } else {
+          return OnboardingScreen(
+            onCompleted: () async {
+              await OnboardingService.markOnboardingAsCompleted();
+              if (context.mounted) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const HomeScreen()),
+                );
+              }
+            },
+          );
+        }
+      },
+    );
+  }
+}

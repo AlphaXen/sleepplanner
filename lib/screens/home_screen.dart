@@ -13,6 +13,7 @@ import 'sleep_music_screen.dart';
 import 'calendar_screen.dart';
 import 'daily_suggestions_screen.dart';
 import 'environment_checker_screen.dart';
+import 'light_control_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -211,6 +212,17 @@ class HomeScreen extends StatelessWidget {
             'Environment',
             Icons.nightlight_round,
             const [Color(0xFF2c3e50), Color(0xFF4ca1af)],
+          ),
+        ),
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LightControlScreen()),
+          ),
+          child: _buildFeatureCardWidget(
+            'Light Control',
+            Icons.lightbulb_outline,
+            const [Color(0xFFf7971e), Color(0xFFffd200)],
           ),
         ),
       ],

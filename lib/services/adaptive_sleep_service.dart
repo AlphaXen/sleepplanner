@@ -79,9 +79,9 @@ class AdaptiveSleepService {
     );
 
     final notes = <String>[];
-    notes.add('주요 수면: \${startSleep.toLocal()} ~ \${endSleep.toLocal()}');
-    notes.add('카페인 컷오프: \${caffeineCutoff.toLocal()} 이후 카페인 자제');
-    notes.add('취침 준비 시작: \${winddownStart.toLocal()} 부터 휴대폰/밝은 빛 줄이기');
+    notes.add('주요 수면: ${_formatTime(startSleep)} ~ ${_formatTime(endSleep)}');
+    notes.add('카페인 컷오프: ${_formatTime(caffeineCutoff)} 이후 카페인 자제');
+    notes.add('취침 준비 시작: ${_formatTime(winddownStart)} 부터 휴대폰/밝은 빛 줄이기');
 
     return DailyPlan(
       mainSleepStart: startSleep,
@@ -144,10 +144,10 @@ class AdaptiveSleepService {
     double chronoOffset = current.chronoOffset;
 
     // STEP 1: 손실값 (디버깅용)
-    final errSleep = (avgActualSleep - tSleep).abs();
-    final errScore = max(0, 5 - avgSleepScore);
-    final errSleepiness = max(0, avgDaytimeSleepiness - 2);
-    final L = 1.0 * errSleep + 1.0 * errSleepiness + 1.0 * errScore;
+    // final errSleep = (avgActualSleep - tSleep).abs();
+    // final errScore = max(0, 5 - avgSleepScore);
+    // final errSleepiness = max(0, avgDaytimeSleepiness - 2);
+    // final L = 1.0 * errSleep + 1.0 * errSleepiness + 1.0 * errScore;
     // L 은 지금은 로그/분석용으로만 사용 가능
 
     // STEP 2: 목표 수면시간 조정
@@ -194,5 +194,10 @@ class AdaptiveSleepService {
 
   double _clamp(double v, double minV, double maxV) {
     return v < minV ? minV : (v > maxV ? maxV : v);
+  }
+
+  String _formatTime(DateTime dt) {
+    final local = dt.toLocal();
+    return "${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}";
   }
 }

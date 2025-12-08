@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Placeholder Firebase configuration -->
+    <!-- To use Firebase, replace these values with your actual Firebase project credentials -->
+    <!-- Get these from: https://console.firebase.google.com/ -->
+    
+    <string name="firebase_database_url"></string>
+    <string name="firebase_messaging_sender_id"></string>
+    <string name="firebase_projectId"></string>
+    <string name="firebase_storageBucket"></string>
+    <string name="firebase_appId"></string>
+    <string name="firebase_apiKey"></string>
+</resources>
