@@ -17,7 +17,7 @@ void scheduleSleepAlarm(DateTime wakeTime) {
 
 class SleepProvider extends ChangeNotifier {
   final List<SleepEntry> _entries = [];
-  int _dailyTargetHours = 7; // 기본값 (SettingsProvider와 동기화됨)
+  final int _dailyTargetHours = 7; // 기본값 (SettingsProvider와 동기화됨)
   bool _goalNotifiedToday = false;
 
   // Adaptive system 관련 상태

@@ -879,14 +879,14 @@ class _AISleepAnalysisScreenState extends State<AISleepAnalysisScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 섹션 제목
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           child: Row(
             children: [
-              const Icon(Icons.auto_fix_high, color: Colors.purple),
-              const SizedBox(width: 8),
+              Icon(Icons.auto_fix_high, color: Colors.purple),
+              SizedBox(width: 8),
               Expanded(
-                child: const Text(
+                child: Text(
                   '적응형 수면 시스템',
                   style: TextStyle(
                     fontSize: 20,

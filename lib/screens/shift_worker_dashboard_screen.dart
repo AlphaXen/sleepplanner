@@ -180,10 +180,10 @@ class _ShiftWorkerDashboardScreenState
   }
 
   void _showShiftInputDialog() {
-    ShiftType _dialogType = ShiftType.day;
-    DateTime? _dialogShiftStart;
-    DateTime? _dialogShiftEnd;
-    DateTime? _dialogPreferredMid;
+    ShiftType dialogType = ShiftType.day;
+    DateTime? dialogShiftStart;
+    DateTime? dialogShiftEnd;
+    DateTime? dialogPreferredMid;
 
     showDialog(
       context: context,
@@ -197,7 +197,7 @@ class _ShiftWorkerDashboardScreenState
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     DropdownButtonFormField<ShiftType>(
-                      value: _dialogType,
+                      initialValue: dialogType,
                       decoration: const InputDecoration(
                         labelText: '근무 유형 선택',
                         border: OutlineInputBorder(),
@@ -217,18 +217,18 @@ class _ShiftWorkerDashboardScreenState
                         ),
                       ],
                       onChanged: (v) {
-                        if (v != null) setState(() => _dialogType = v);
+                        if (v != null) setState(() => dialogType = v);
                       },
                     ),
                     const SizedBox(height: 16),
-                    if (_dialogType != ShiftType.off) ...[
+                    if (dialogType != ShiftType.off) ...[
                       ListTile(
                         title: const Text('근무 시작 시간'),
                         subtitle: Text(
-                          _dialogShiftStart == null
+                          dialogShiftStart == null
                               ? '선택...'
-                              : '${_dialogShiftStart!.year}-${_dialogShiftStart!.month.toString().padLeft(2, '0')}-${_dialogShiftStart!.day.toString().padLeft(2, '0')} '
-                                  '${_dialogShiftStart!.hour.toString().padLeft(2, '0')}:${_dialogShiftStart!.minute.toString().padLeft(2, '0')}',
+                              : '${dialogShiftStart!.year}-${dialogShiftStart!.month.toString().padLeft(2, '0')}-${dialogShiftStart!.day.toString().padLeft(2, '0')} '
+                                  '${dialogShiftStart!.hour.toString().padLeft(2, '0')}:${dialogShiftStart!.minute.toString().padLeft(2, '0')}',
                         ),
                         trailing: const Icon(Icons.schedule),
                         onTap: () async {
@@ -246,7 +246,7 @@ class _ShiftWorkerDashboardScreenState
                           );
                           if (time != null) {
                             setState(() {
-                              _dialogShiftStart = DateTime(
+                              dialogShiftStart = DateTime(
                                 date.year,
                                 date.month,
                                 date.day,
@@ -260,10 +260,10 @@ class _ShiftWorkerDashboardScreenState
                       ListTile(
                         title: const Text('근무 종료 시간'),
                         subtitle: Text(
-                          _dialogShiftEnd == null
+                          dialogShiftEnd == null
                               ? '선택...'
-                              : '${_dialogShiftEnd!.year}-${_dialogShiftEnd!.month.toString().padLeft(2, '0')}-${_dialogShiftEnd!.day.toString().padLeft(2, '0')} '
-                                  '${_dialogShiftEnd!.hour.toString().padLeft(2, '0')}:${_dialogShiftEnd!.minute.toString().padLeft(2, '0')}',
+                              : '${dialogShiftEnd!.year}-${dialogShiftEnd!.month.toString().padLeft(2, '0')}-${dialogShiftEnd!.day.toString().padLeft(2, '0')} '
+                                  '${dialogShiftEnd!.hour.toString().padLeft(2, '0')}:${dialogShiftEnd!.minute.toString().padLeft(2, '0')}',
                         ),
                         trailing: const Icon(Icons.schedule),
                         onTap: () async {
@@ -281,7 +281,7 @@ class _ShiftWorkerDashboardScreenState
                           );
                           if (time != null) {
                             setState(() {
-                              _dialogShiftEnd = DateTime(
+                              dialogShiftEnd = DateTime(
                                 date.year,
                                 date.month,
                                 date.day,
@@ -296,10 +296,10 @@ class _ShiftWorkerDashboardScreenState
                       ListTile(
                         title: const Text('선호 수면 중간 시간 (휴무일)'),
                         subtitle: Text(
-                          _dialogPreferredMid == null
+                          dialogPreferredMid == null
                               ? '선택...'
-                              : '${_dialogPreferredMid!.year}-${_dialogPreferredMid!.month.toString().padLeft(2, '0')}-${_dialogPreferredMid!.day.toString().padLeft(2, '0')} '
-                                  '${_dialogPreferredMid!.hour.toString().padLeft(2, '0')}:${_dialogPreferredMid!.minute.toString().padLeft(2, '0')}',
+                              : '${dialogPreferredMid!.year}-${dialogPreferredMid!.month.toString().padLeft(2, '0')}-${dialogPreferredMid!.day.toString().padLeft(2, '0')} '
+                                  '${dialogPreferredMid!.hour.toString().padLeft(2, '0')}:${dialogPreferredMid!.minute.toString().padLeft(2, '0')}',
                         ),
                         trailing: const Icon(Icons.schedule),
                         onTap: () async {
@@ -317,7 +317,7 @@ class _ShiftWorkerDashboardScreenState
                           );
                           if (time != null) {
                             setState(() {
-                              _dialogPreferredMid = DateTime(
+                              dialogPreferredMid = DateTime(
                                 date.year,
                                 date.month,
                                 date.day,
@@ -342,30 +342,30 @@ class _ShiftWorkerDashboardScreenState
                     final provider = Provider.of<SleepProvider>(context, listen: false);
 
                     ShiftInfo shift;
-                    if (_dialogType == ShiftType.off) {
-                      if (_dialogPreferredMid == null) {
+                    if (dialogType == ShiftType.off) {
+                      if (dialogPreferredMid == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('수면 중간 시간을 선택해주세요.')),
                         );
                         return;
                       }
-                      shift = ShiftInfo.off(preferredMid: _dialogPreferredMid);
+                      shift = ShiftInfo.off(preferredMid: dialogPreferredMid);
                     } else {
-                      if (_dialogShiftStart == null || _dialogShiftEnd == null) {
+                      if (dialogShiftStart == null || dialogShiftEnd == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('근무 시작 및 종료 시간을 선택해주세요.')),
                         );
                         return;
                       }
-                      if (_dialogType == ShiftType.day) {
+                      if (dialogType == ShiftType.day) {
                         shift = ShiftInfo.day(
-                          shiftStart: _dialogShiftStart,
-                          shiftEnd: _dialogShiftEnd,
+                          shiftStart: dialogShiftStart,
+                          shiftEnd: dialogShiftEnd,
                         );
                       } else {
                         shift = ShiftInfo.night(
-                          shiftStart: _dialogShiftStart,
-                          shiftEnd: _dialogShiftEnd,
+                          shiftStart: dialogShiftStart,
+                          shiftEnd: dialogShiftEnd,
                         );
                       }
                     }
@@ -407,8 +407,8 @@ class _ShiftWorkerDashboardScreenState
               children: [
                 const Icon(Icons.event_note, color: Colors.blue),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: const Text(
+                const Expanded(
+                  child: Text(
                     '오늘의 일일 계획',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis,

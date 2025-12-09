@@ -298,7 +298,7 @@ class _DailyPlanScreenState extends State<DailyPlanScreen> {
             const SizedBox(height: 8),
             Text("종료: ${_fmt(plan.mainSleepEnd)}"),
             const SizedBox(height: 8),
-            Text("기간: ${h}시간 ${m}분"),
+            Text("기간: $h시간 $m분"),
           ],
         ),
       ),

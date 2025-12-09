@@ -414,7 +414,7 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
               children: [
                 // 근무 유형 선택
                 DropdownButtonFormField<ShiftType>(
-                  value: selectedType,
+                  initialValue: selectedType,
                   decoration: const InputDecoration(
                     labelText: '근무 유형',
                     border: OutlineInputBorder(),

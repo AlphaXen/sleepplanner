@@ -514,7 +514,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final sleepHours = sleepDuration.inHours;
         final sleepMinutes = sleepDuration.inMinutes.remainder(60);
         
-        String _formatTime(DateTime dt) {
+        String formatTime(DateTime dt) {
           return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
         }
 
@@ -571,8 +571,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildRecommendationRow(
                     icon: Icons.bedtime,
                     label: '수면 시간',
-                    value: '${_formatTime(plan.mainSleepStart)} - ${_formatTime(plan.mainSleepEnd)}',
-                    subValue: '($sleepHours시간 ${sleepMinutes}분)',
+                    value: '${formatTime(plan.mainSleepStart)} - ${formatTime(plan.mainSleepEnd)}',
+                    subValue: '($sleepHours시간 $sleepMinutes분)',
                   ),
                   const SizedBox(height: 12),
                   
@@ -580,7 +580,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildRecommendationRow(
                     icon: Icons.coffee,
                     label: '카페인 컷오프',
-                    value: _formatTime(plan.caffeineCutoff),
+                    value: formatTime(plan.caffeineCutoff),
                     subValue: '이후 카페인 자제',
                   ),
                   const SizedBox(height: 12),
@@ -589,7 +589,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildRecommendationRow(
                     icon: Icons.nightlight,
                     label: '취침 준비',
-                    value: _formatTime(plan.winddownStart),
+                    value: formatTime(plan.winddownStart),
                     subValue: '부터 시작',
                   ),
                   const SizedBox(height: 16),

@@ -34,11 +34,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    const Row(
                       children: [
-                        const Icon(Icons.bedtime, color: Colors.blue),
-                        const SizedBox(width: 8),
-                        const Text(
+                        Icon(Icons.bedtime, color: Colors.blue),
+                        SizedBox(width: 8),
+                        Text(
                           '일일 목표 수면시간',
                           style: TextStyle(
                             fontSize: 18,
@@ -89,11 +89,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    const Row(
                       children: [
-                        const Icon(Icons.access_time, color: Colors.orange),
-                        const SizedBox(width: 8),
-                        const Text(
+                        Icon(Icons.access_time, color: Colors.orange),
+                        SizedBox(width: 8),
+                        Text(
                           '하루 시작 시간',
                           style: TextStyle(
                             fontSize: 18,

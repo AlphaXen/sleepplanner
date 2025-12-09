@@ -40,7 +40,7 @@ class SleepApiService {
     if (_prefs == null) await init();
 
     // Kotlin에서 직접 SharedPreferences에 저장할 때는 "flutter." 프리픽스가 없음
-    final key = _nativeKey; // 'native_pending_sleep_data'
+    const key = _nativeKey; // 'native_pending_sleep_data'
     debugPrint('🔍 Sleep API 데이터 읽기 시도 - 키: $key');
     
     // 모든 키 확인 (디버그용)

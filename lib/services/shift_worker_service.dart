@@ -19,10 +19,10 @@ class ShiftWorkerService {
 
     debugPrint('🔍 수면부채 계산 시작:');
     debugPrint('   전체 수면 기록 수: ${entries.length}개');
-    debugPrint('   목표 시간: ${targetHours}시간');
-    debugPrint('   계산 기간: 최근 ${days}일');
+    debugPrint('   목표 시간: $targetHours시간');
+    debugPrint('   계산 기간: 최근 $days일');
     debugPrint('   오늘 날짜 키: ${today.toString()}');
-    debugPrint('   하루 시작 시간: ${dayStartHour}시');
+    debugPrint('   하루 시작 시간: $dayStartHour시');
 
     // 최근 N일 계산 (오늘부터 과거로)
     for (int i = 0; i < days; i++) {
