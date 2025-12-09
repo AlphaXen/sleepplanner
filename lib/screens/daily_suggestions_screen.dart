@@ -10,7 +10,7 @@ class DailySuggestionsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Daily Sleep Suggestions'),
+        title: const Text('일일 수면 팁'),
         centerTitle: true,
         elevation: 0,
       ),
@@ -26,7 +26,7 @@ class DailySuggestionsScreen extends StatelessWidget {
 
             // Sleep Hygiene Section
             const Text(
-              '💤 Sleep Hygiene Recommendations',
+              '💤 수면 위생 권장사항',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -42,7 +42,7 @@ class DailySuggestionsScreen extends StatelessWidget {
 
             // Best Practices Section
             const Text(
-              '✨ Best Practices for Better Sleep',
+              '✨ 더 나은 수면을 위한 최선의 방법',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,

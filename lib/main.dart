@@ -12,6 +12,7 @@ import 'providers/env_provider.dart';
 import 'providers/feedback_provider.dart';
 import 'providers/schedule_provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/settings_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/login_screen.dart';
@@ -56,6 +57,7 @@ class SleepPlannerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => SleepProvider()),
         ChangeNotifierProvider(create: (_) => AutoReplyProvider()),

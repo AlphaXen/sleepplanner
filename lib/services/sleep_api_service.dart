@@ -10,7 +10,7 @@ class SleepApiService {
   SleepApiService._internal();
 
   static const platform = MethodChannel('com.example.sleep_tracker/sleep');
-  static const String _nativeKey = 'native_pending_sleep_data'; // Kotlin이 저장하는 키
+  static const String _nativeKey = 'native_pending_sleep_data'; // Kotlin이 저장하는 키 (flutter. 프리픽스 없음)
 
   SharedPreferences? _prefs;
 
@@ -22,9 +22,15 @@ class SleepApiService {
   Future<bool> requestSleepUpdates() async {
     try {
       final result = await platform.invokeMethod('requestSleepUpdates');
+      debugPrint('Sleep API 구독 결과: $result');
       return result == true;
+    } on PlatformException catch (e) {
+      debugPrint('Sleep API 구독 실패 (PlatformException): ${e.code} - ${e.message}');
+      debugPrint('세부 정보: ${e.details}');
+      return false;
     } catch (e) {
-      debugPrint('Sleep API 구독 실패: $e');
+      debugPrint('Sleep API 구독 실패 (일반 오류): $e');
+      debugPrint('오류 타입: ${e.runtimeType}');
       return false;
     }
   }
@@ -33,11 +39,24 @@ class SleepApiService {
   Future<Map<String, DateTime>?> getLatestSleepData() async {
     if (_prefs == null) await init();
 
-    final String? nativeJson = _prefs?.getString('flutter.$_nativeKey');
+    // Kotlin에서 직접 SharedPreferences에 저장할 때는 "flutter." 프리픽스가 없음
+    final key = _nativeKey; // 'native_pending_sleep_data'
+    debugPrint('🔍 Sleep API 데이터 읽기 시도 - 키: $key');
+    
+    // 모든 키 확인 (디버그용)
+    final allKeys = _prefs?.getKeys();
+    debugPrint('📋 SharedPreferences 모든 키: $allKeys');
+    
+    final String? nativeJson = _prefs?.getString(key);
+    debugPrint('📦 읽은 데이터: ${nativeJson != null ? "${nativeJson.length} bytes" : "null"}');
+    
     if (nativeJson == null || nativeJson == "[]") {
-      debugPrint('저장된 Sleep API 데이터가 없습니다.');
+      debugPrint('⚠️ 저장된 Sleep API 데이터가 없습니다.');
+      debugPrint('   키 "$key"로 저장된 데이터가 없거나 비어있습니다.');
       return null;
     }
+    
+    debugPrint('✅ 데이터 발견: ${nativeJson.substring(0, nativeJson.length > 200 ? 200 : nativeJson.length)}...');
 
     try {
       final List<dynamic> nativeList = jsonDecode(nativeJson);
@@ -85,7 +104,7 @@ class SleepApiService {
   /// 네이티브 임시 데이터 삭제
   Future<void> clearNativeData() async {
     if (_prefs == null) await init();
-    await _prefs?.remove('flutter.$_nativeKey');
+    await _prefs?.remove(_nativeKey); // 프리픽스 없이
   }
 }
 

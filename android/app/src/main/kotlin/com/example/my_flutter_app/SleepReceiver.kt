@@ -11,7 +11,9 @@ import org.json.JSONObject
 class SleepReceiver : BroadcastReceiver() {
     
     private val PREF_NAME = "FlutterSharedPreferences"
-    private val PENDING_KEY = "flutter.native_pending_sleep_data"
+    // Flutter의 SharedPreferences 플러그인이 자동으로 "flutter." 프리픽스를 관리하므로
+    // 네이티브 코드에서는 프리픽스 없이 키를 저장해야 함
+    private val PENDING_KEY = "native_pending_sleep_data"
 
     override fun onReceive(context: Context, intent: Intent) {
         if (SleepSegmentEvent.hasEvents(intent)) {
@@ -36,7 +38,12 @@ class SleepReceiver : BroadcastReceiver() {
                 Log.d("SleepReceiver", "Saved session: $startStr ~ $endStr")
             }
 
-            prefs.edit().putString(PENDING_KEY, jsonArray.toString()).apply()
+            val jsonString = jsonArray.toString()
+            val saved = prefs.edit().putString(PENDING_KEY, jsonString).commit()
+            Log.d("SleepReceiver", "Data saved to SharedPreferences: $saved")
+            Log.d("SleepReceiver", "Key: $PENDING_KEY")
+            Log.d("SleepReceiver", "Data length: ${jsonString.length} bytes")
+            Log.d("SleepReceiver", "Data preview: ${if (jsonString.length > 100) jsonString.substring(0, 100) else jsonString}...")
         }
     }
 

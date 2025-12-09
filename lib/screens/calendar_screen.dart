@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import '../providers/calendar_provider.dart';
+import '../providers/sleep_provider.dart';
 
 class CalendarScreen extends StatelessWidget {
   const CalendarScreen({super.key});
@@ -15,10 +16,12 @@ class CalendarScreen extends StatelessWidget {
         centerTitle: true,
         elevation: 0,
       ),
-      body: Consumer<CalendarProvider>(
-        builder: (context, calendarProvider, child) {
+      body: Consumer2<CalendarProvider, SleepProvider>(
+        builder: (context, calendarProvider, sleepProvider, child) {
+          final actualEntries = sleepProvider.entries;
           final stats = calendarProvider.getMonthlyStats(
             calendarProvider.focusedDay,
+            actualEntries,
           );
 
           return SingleChildScrollView(
@@ -60,17 +63,17 @@ class CalendarScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           _StatCard(
-                            label: 'Average',
+                            label: '평균',
                             value: '${stats['average']!.toStringAsFixed(1)}h',
                             icon: Icons.show_chart,
                           ),
                           _StatCard(
-                            label: 'Max',
+                            label: '최대',
                             value: '${stats['max']!.toStringAsFixed(1)}h',
                             icon: Icons.arrow_upward,
                           ),
                           _StatCard(
-                            label: 'Min',
+                            label: '최소',
                             value: '${stats['min']!.toStringAsFixed(1)}h',
                             icon: Icons.arrow_downward,
                           ),
@@ -117,31 +120,28 @@ class CalendarScreen extends StatelessWidget {
                       ),
                       calendarBuilders: CalendarBuilders(
                         defaultBuilder: (context, day, focusedDay) {
+                          final hours = calendarProvider.getSleepHours(day, actualEntries);
                           return _DayCell(
                             day: day,
-                            sleepHours: calendarProvider.getSleepHours(day),
-                            color: calendarProvider.getSleepQualityColor(
-                              calendarProvider.getSleepHours(day),
-                            ),
+                            sleepHours: hours,
+                            color: calendarProvider.getSleepQualityColor(hours),
                           );
                         },
                         todayBuilder: (context, day, focusedDay) {
+                          final hours = calendarProvider.getSleepHours(day, actualEntries);
                           return _DayCell(
                             day: day,
-                            sleepHours: calendarProvider.getSleepHours(day),
-                            color: calendarProvider.getSleepQualityColor(
-                              calendarProvider.getSleepHours(day),
-                            ),
+                            sleepHours: hours,
+                            color: calendarProvider.getSleepQualityColor(hours),
                             isToday: true,
                           );
                         },
                         selectedBuilder: (context, day, focusedDay) {
+                          final hours = calendarProvider.getSleepHours(day, actualEntries);
                           return _DayCell(
                             day: day,
-                            sleepHours: calendarProvider.getSleepHours(day),
-                            color: calendarProvider.getSleepQualityColor(
-                              calendarProvider.getSleepHours(day),
-                            ),
+                            sleepHours: hours,
+                            color: calendarProvider.getSleepQualityColor(hours),
                             isSelected: true,
                           );
                         },
@@ -168,7 +168,7 @@ class CalendarScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Sleep Quality Legend',
+                            '수면 품질 범례',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -177,23 +177,23 @@ class CalendarScreen extends StatelessWidget {
                           const SizedBox(height: 12),
                           _LegendItem(
                             color: Colors.green.shade400,
-                            label: 'Excellent (8+ hours)',
+                            label: '우수 (8시간 이상)',
                           ),
                           _LegendItem(
                             color: Colors.lightGreen.shade400,
-                            label: 'Good (7-8 hours)',
+                            label: '양호 (7-8시간)',
                           ),
                           _LegendItem(
                             color: Colors.orange.shade400,
-                            label: 'Fair (6-7 hours)',
+                            label: '보통 (6-7시간)',
                           ),
                           _LegendItem(
                             color: Colors.red.shade400,
-                            label: 'Poor (<6 hours)',
+                            label: '부족 (6시간 미만)',
                           ),
                           _LegendItem(
                             color: Colors.grey.shade200,
-                            label: 'No data',
+                            label: '데이터 없음',
                           ),
                         ],
                       ),
@@ -233,9 +233,10 @@ class CalendarScreen extends StatelessWidget {
                                   calendarProvider
                                           .getSleepHours(
                                             calendarProvider.selectedDay!,
+                                            actualEntries,
                                           )
                                           ?.toStringAsFixed(1) ??
-                                      'No data',
+                                      '데이터 없음',
                                   style: const TextStyle(
                                     fontSize: 32,
                                     fontWeight: FontWeight.bold,
@@ -243,10 +244,11 @@ class CalendarScreen extends StatelessWidget {
                                 ),
                                 if (calendarProvider.getSleepHours(
                                       calendarProvider.selectedDay!,
+                                      actualEntries,
                                     ) !=
                                     null)
                                   const Text(
-                                    ' hours',
+                                    ' 시간',
                                     style: TextStyle(fontSize: 18),
                                   ),
                               ],

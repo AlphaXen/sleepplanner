@@ -109,23 +109,46 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun subscribeToSleepUpdates() {
-        val intent = Intent(this, SleepReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            this,
-            REQUEST_CODE,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-        )
+        try {
+            val intent = Intent(this, SleepReceiver::class.java)
+            val pendingIntent = PendingIntent.getBroadcast(
+                this,
+                REQUEST_CODE,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            )
 
-        val request = SleepSegmentRequest.getDefaultSleepSegmentRequest()
-        
-        ActivityRecognition.getClient(this)
-            .requestSleepSegmentUpdates(pendingIntent, request)
-            .addOnSuccessListener {
-                android.util.Log.d("MainActivity", "Successfully subscribed to sleep updates")
-            }
-            .addOnFailureListener { e ->
-                android.util.Log.e("MainActivity", "Failed to subscribe to sleep updates", e)
-            }
+            val request = SleepSegmentRequest.getDefaultSleepSegmentRequest()
+            
+            ActivityRecognition.getClient(this)
+                .requestSleepSegmentUpdates(pendingIntent, request)
+                .addOnSuccessListener {
+                    android.util.Log.d("MainActivity", "✅ Successfully subscribed to sleep updates")
+                }
+                .addOnFailureListener { e ->
+                    android.util.Log.e("MainActivity", "❌ Failed to subscribe to sleep updates", e)
+                    android.util.Log.e("MainActivity", "오류 메시지: ${e.message}")
+                    android.util.Log.e("MainActivity", "오류 원인: ${e.cause}")
+                    
+                    // 일반적인 오류 원인 안내
+                    when {
+                        e.message?.contains("API_NOT_AVAILABLE") == true -> {
+                            android.util.Log.e("MainActivity", "⚠️ Sleep API를 사용할 수 없습니다. Google Play Services를 업데이트하세요.")
+                        }
+                        e.message?.contains("RESOLUTION_REQUIRED") == true -> {
+                            android.util.Log.e("MainActivity", "⚠️ Google Play Services 설정이 필요합니다.")
+                        }
+                        e.message?.contains("NETWORK_ERROR") == true -> {
+                            android.util.Log.e("MainActivity", "⚠️ 네트워크 연결 오류입니다.")
+                        }
+                        else -> {
+                            android.util.Log.e("MainActivity", "⚠️ 알 수 없는 오류: ${e.javaClass.simpleName}")
+                        }
+                    }
+                }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "❌ Exception in subscribeToSleepUpdates", e)
+            android.util.Log.e("MainActivity", "오류: ${e.message}")
+        }
     }
 }

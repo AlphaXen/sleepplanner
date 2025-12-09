@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import '../models/weekly_schedule.dart';
 import '../models/shift_info.dart';
 import '../models/sleep_entry.dart';
 import '../models/adaptive_params.dart';
+import '../utils/date_utils.dart';
 
 class ShiftWorkerService {
   /// 수면 부채 계산 (최근 N일)
@@ -9,11 +11,18 @@ class ShiftWorkerService {
   List<SleepDebt> calculateSleepDebt({
     required List<SleepEntry> entries,
     required double targetHours,
+    required int dayStartHour,
     int days = 7,
   }) {
     final debts = <SleepDebt>[];
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final today = getTodayKey(dayStartHour);
+
+    debugPrint('🔍 수면부채 계산 시작:');
+    debugPrint('   전체 수면 기록 수: ${entries.length}개');
+    debugPrint('   목표 시간: ${targetHours}시간');
+    debugPrint('   계산 기간: 최근 ${days}일');
+    debugPrint('   오늘 날짜 키: ${today.toString()}');
+    debugPrint('   하루 시작 시간: ${dayStartHour}시');
 
     // 최근 N일 계산 (오늘부터 과거로)
     for (int i = 0; i < days; i++) {
@@ -21,30 +30,45 @@ class ShiftWorkerService {
 
       // 해당 날짜의 총 수면 시간 계산
       final dayEntries = entries.where((e) {
-        final entryDate = e.dateKey;
-        return entryDate.year == date.year &&
+        final entryDate = getDateKey(e.wakeTime, dayStartHour);
+        final matches = entryDate.year == date.year &&
             entryDate.month == date.month &&
             entryDate.day == date.day;
+        if (matches) {
+          debugPrint('   ✅ 매칭: ${e.sleepTime.toString()} ~ ${e.wakeTime.toString()} (기상일: ${entryDate.toString().substring(0, 10)})');
+        }
+        return matches;
       }).toList();
 
       // 수면 기록이 있는 날만 부채 계산에 포함
       if (dayEntries.isNotEmpty) {
         double actualHours = 0;
         for (final entry in dayEntries) {
-          actualHours += entry.duration.inMinutes / 60.0;
+          final hours = entry.duration.inMinutes / 60.0;
+          actualHours += hours;
+          debugPrint('      수면 시간: ${hours.toStringAsFixed(2)}시간 (총 ${actualHours.toStringAsFixed(2)}시간)');
         }
 
-        debts.add(SleepDebt(
+        final debt = SleepDebt(
           date: date,
           targetHours: targetHours,
           actualHours: actualHours,
-        ));
+        );
+        
+        debugPrint('      부채: ${debt.debtHours.toStringAsFixed(2)}시간 (목표 ${targetHours}h - 실제 ${actualHours.toStringAsFixed(2)}h)');
+        
+        debts.add(debt);
+      } else {
+        debugPrint('   ⚠️ ${date.toString().substring(0, 10)}: 기록 없음 (제외)');
       }
       // 기록 없는 날은 debts 리스트에 추가하지 않음
     }
 
     // 최신순으로 정렬 (오늘이 첫번째)
     debts.sort((a, b) => b.date.compareTo(a.date));
+
+    debugPrint('   최종 계산된 부채 일수: ${debts.length}일');
+    debugPrint('   총 누적 부채: ${debts.fold(0.0, (sum, debt) => sum + debt.debtHours).toStringAsFixed(2)}시간');
 
     return debts;
   }

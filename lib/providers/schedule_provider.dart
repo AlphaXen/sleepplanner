@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/weekly_schedule.dart';
 import '../models/shift_info.dart';
 import '../models/sleep_entry.dart';
+import '../utils/date_utils.dart';
 
 class ScheduleProvider extends ChangeNotifier {
   WeeklySchedule? _currentSchedule;
@@ -61,15 +62,15 @@ class ScheduleProvider extends ChangeNotifier {
   bool get hasSchedule => _currentSchedule != null;
 
   /// 수면 기록 데이터로부터 주간 스케줄 자동 생성
-  Future<void> generateScheduleFromSleepEntries(List<SleepEntry> entries) async {
+  Future<void> generateScheduleFromSleepEntries(List<SleepEntry> entries, {int dayStartHour = 0}) async {
     if (entries.isEmpty) {
       debugPrint('No sleep entries to generate schedule');
       return;
     }
 
-    // 현재 주의 월요일 구하기
-    final now = DateTime.now();
-    final monday = now.subtract(Duration(days: now.weekday - 1));
+    // 현재 주의 월요일 구하기 (하루 시작 시간 고려)
+    final todayKey = getTodayKey(dayStartHour);
+    final monday = todayKey.subtract(Duration(days: todayKey.weekday - 1));
     final weekStart = DateTime(monday.year, monday.month, monday.day);
 
     // 최근 7일의 수면 기록 분석
@@ -78,12 +79,13 @@ class ScheduleProvider extends ChangeNotifier {
     // 각 날짜별로 수면 기록이 있는지 확인
     for (int dayIndex = 0; dayIndex < 7; dayIndex++) {
       final targetDate = weekStart.add(Duration(days: dayIndex));
-      final dateKey = DateTime(targetDate.year, targetDate.month, targetDate.day);
       
-      // 해당 날짜에 기상한 수면 기록 찾기 (wakeTime 기준)
+      // 해당 날짜에 기상한 수면 기록 찾기 (wakeTime 기준, 하루 시작 시간 고려)
       final entryForDay = entries.where((e) {
-        final wakeDateKey = DateTime(e.wakeTime.year, e.wakeTime.month, e.wakeTime.day);
-        return wakeDateKey == dateKey;
+        final wakeDateKey = getDateKey(e.wakeTime, dayStartHour);
+        return wakeDateKey.year == targetDate.year &&
+               wakeDateKey.month == targetDate.month &&
+               wakeDateKey.day == targetDate.day;
       }).toList();
 
       if (entryForDay.isNotEmpty) {

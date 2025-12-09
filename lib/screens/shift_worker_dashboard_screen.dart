@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/sleep_provider.dart';
 import '../providers/schedule_provider.dart';
+import '../providers/settings_provider.dart';
 import '../services/shift_worker_service.dart';
 import '../models/weekly_schedule.dart';
 import '../models/shift_info.dart';
-import '../models/daily_plan.dart';
 import 'weekly_schedule_screen.dart';
 import 'daily_plan_screen.dart';
 
@@ -35,9 +35,13 @@ class _ShiftWorkerDashboardScreenState
   Future<void> _generateScheduleFromEntries() async {
     final sleepProvider = Provider.of<SleepProvider>(context, listen: false);
     final scheduleProvider = Provider.of<ScheduleProvider>(context, listen: false);
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
     
     if (sleepProvider.entries.isNotEmpty) {
-      await scheduleProvider.generateScheduleFromSleepEntries(sleepProvider.entries);
+      await scheduleProvider.generateScheduleFromSleepEntries(
+        sleepProvider.entries,
+        dayStartHour: settingsProvider.dayStartHour,
+      );
     }
   }
 
@@ -45,15 +49,26 @@ class _ShiftWorkerDashboardScreenState
   Widget build(BuildContext context) {
     final sleepProvider = Provider.of<SleepProvider>(context);
     final scheduleProvider = Provider.of<ScheduleProvider>(context);
+    final settingsProvider = Provider.of<SettingsProvider>(context);
     final currentSchedule = scheduleProvider.currentSchedule;
 
-    // 수면 부채 계산
+    // 수면 부채 계산 (사용자 설정 목표 시간 사용)
     final sleepDebts = _service.calculateSleepDebt(
       entries: sleepProvider.entries,
-      targetHours: sleepProvider.adaptiveParams.tSleep,
+      targetHours: settingsProvider.dailyTargetHours.toDouble(),
+      dayStartHour: settingsProvider.dayStartHour,
       days: 7,
     );
     final cumulativeDebt = _service.calculateCumulativeDebt(sleepDebts);
+    
+    debugPrint('📊 수면부채 계산:');
+    debugPrint('   수면 기록 수: ${sleepProvider.entries.length}개');
+    debugPrint('   목표 시간: ${settingsProvider.dailyTargetHours}시간');
+    debugPrint('   계산된 부채 일수: ${sleepDebts.length}일');
+    debugPrint('   누적 부채: ${cumulativeDebt.toStringAsFixed(1)}시간');
+    for (final debt in sleepDebts) {
+      debugPrint('   ${debt.date.toString().substring(0, 10)}: 실제 ${debt.actualHours.toStringAsFixed(1)}h, 목표 ${debt.targetHours.toStringAsFixed(1)}h, 부채 ${debt.debtHours.toStringAsFixed(1)}h');
+    }
 
     // 평균 수면 시간 계산
     final avgSleepHours = sleepDebts.isEmpty
@@ -81,6 +96,21 @@ class _ShiftWorkerDashboardScreenState
         title: const Text('야간 노동자 대시보드'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.calendar_today),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const WeeklyScheduleScreen(),
+                ),
+              ).then((_) {
+                // 스케줄 저장 후 화면 새로고침
+                setState(() {});
+              });
+            },
+            tooltip: '주간 스케줄 설정',
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () async {
               final sleepProvider = Provider.of<SleepProvider>(context, listen: false);
@@ -95,7 +125,11 @@ class _ShiftWorkerDashboardScreenState
                 return;
               }
               
-              await scheduleProvider.generateScheduleFromSleepEntries(sleepProvider.entries);
+              final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+              await scheduleProvider.generateScheduleFromSleepEntries(
+                sleepProvider.entries,
+                dayStartHour: settingsProvider.dayStartHour,
+              );
               
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -386,7 +420,13 @@ class _ShiftWorkerDashboardScreenState
                       }
                     }
 
-                    provider.computeTodayPlanForShift(shift);
+                    final scheduleProvider = Provider.of<ScheduleProvider>(context, listen: false);
+                    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+                    provider.computeTodayPlanForShift(
+                      shift: shift,
+                      weeklySchedule: scheduleProvider.currentSchedule,
+                      dayStartHour: settingsProvider.dayStartHour,
+                    );
                     Navigator.pop(dialogContext);
                     Navigator.push(
                       context,
@@ -417,11 +457,13 @@ class _ShiftWorkerDashboardScreenState
               children: [
                 const Icon(Icons.event_note, color: Colors.blue),
                 const SizedBox(width: 8),
-                const Text(
-                  '오늘의 일일 계획',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Expanded(
+                  child: const Text(
+                    '오늘의 일일 계획',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.add_circle_outline),
                   onPressed: _showShiftInputDialog,
@@ -439,21 +481,34 @@ class _ShiftWorkerDashboardScreenState
                 ),
               )
             else ...[
-              Text('수면 시간: ${plan.mainSleepStart.hour.toString().padLeft(2, '0')}:${plan.mainSleepStart.minute.toString().padLeft(2, '0')} - ${plan.mainSleepEnd.hour.toString().padLeft(2, '0')}:${plan.mainSleepEnd.minute.toString().padLeft(2, '0')}'),
+              Text(
+                '수면 시간: ${plan.mainSleepStart.hour.toString().padLeft(2, '0')}:${plan.mainSleepStart.minute.toString().padLeft(2, '0')} - ${plan.mainSleepEnd.hour.toString().padLeft(2, '0')}:${plan.mainSleepEnd.minute.toString().padLeft(2, '0')}',
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+              ),
               const SizedBox(height: 8),
-              Text('카페인 컷오프: ${plan.caffeineCutoff.hour.toString().padLeft(2, '0')}:${plan.caffeineCutoff.minute.toString().padLeft(2, '0')}'),
+              Text(
+                '카페인 컷오프: ${plan.caffeineCutoff.hour.toString().padLeft(2, '0')}:${plan.caffeineCutoff.minute.toString().padLeft(2, '0')}',
+                overflow: TextOverflow.ellipsis,
+              ),
               const SizedBox(height: 8),
-              Text('취침 준비: ${plan.winddownStart.hour.toString().padLeft(2, '0')}:${plan.winddownStart.minute.toString().padLeft(2, '0')}'),
+              Text(
+                '취침 준비: ${plan.winddownStart.hour.toString().padLeft(2, '0')}:${plan.winddownStart.minute.toString().padLeft(2, '0')}',
+                overflow: TextOverflow.ellipsis,
+              ),
               const SizedBox(height: 12),
-              FilledButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const DailyPlanScreen()),
-                  );
-                },
-                icon: const Icon(Icons.visibility),
-                label: const Text('전체 계획 보기'),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const DailyPlanScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.visibility),
+                  label: const Text('전체 계획 보기'),
+                ),
               ),
             ],
           ],
@@ -565,9 +620,26 @@ class _ShiftWorkerDashboardScreenState
               children: [
                 Icon(Icons.calendar_today, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
-                const Text(
-                  '주간 근무 패턴',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                const Expanded(
+                  child: Text(
+                    '주간 근무 패턴',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit, size: 20),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const WeeklyScheduleScreen(),
+                      ),
+                    ).then((_) {
+                      // 스케줄 저장 후 화면 새로고침
+                      setState(() {});
+                    });
+                  },
+                  tooltip: '스케줄 수정',
                 ),
               ],
             ),

@@ -44,7 +44,7 @@ class EnvironmentCheckerScreen extends StatefulWidget {
 
 class _EnvironmentCheckerScreenState extends State<EnvironmentCheckerScreen> {
   bool _serviceRunning = false;
-  String _message = "Service is off.";
+  String _message = "서비스가 꺼져있습니다.";
   List<EnvSample> _samples = [];
   List<EnvSample> _localDb = [];
   Timer? _poller;
@@ -97,11 +97,11 @@ class _EnvironmentCheckerScreenState extends State<EnvironmentCheckerScreen> {
       await _channel.invokeMethod("startLightService");
       setState(() {
         _serviceRunning = true;
-        _message = "Measuring in real-time...";
+        _message = "실시간 측정 중...";
       });
       _startPolling();
     } catch (e) {
-      setState(() => _message = "Failed to start service: $e");
+      setState(() => _message = "서비스 시작 실패: $e");
     }
   }
 
@@ -110,7 +110,7 @@ class _EnvironmentCheckerScreenState extends State<EnvironmentCheckerScreen> {
     _poller?.cancel();
     setState(() {
       _serviceRunning = false;
-      _message = "Service stopped.";
+        _message = "서비스가 중지되었습니다.";
       _samples.clear();
     });
   }
@@ -166,8 +166,8 @@ class _EnvironmentCheckerScreenState extends State<EnvironmentCheckerScreen> {
     final tot = map.values.fold(0, (a, b) => a + b);
     if (tot == 0) {
       return [
-        PieChartSectionData(
-            value: 1, color: Colors.grey, title: "No Data", radius: 45)
+          PieChartSectionData(
+            value: 1, color: Colors.grey, title: "데이터 없음", radius: 45)
       ];
     }
 
@@ -201,7 +201,7 @@ class _EnvironmentCheckerScreenState extends State<EnvironmentCheckerScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.bar_chart),
-            tooltip: 'Daily Statistics',
+            tooltip: '일일 통계',
             onPressed: () {
               Navigator.push(
                   context,
@@ -246,12 +246,12 @@ class _EnvironmentCheckerScreenState extends State<EnvironmentCheckerScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Environment Monitor',
+                                '환경 모니터',
                                 style: theme.textTheme.titleMedium,
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Measure every 5 seconds',
+                                '5초마다 측정',
                                 style: theme.textTheme.bodySmall,
                               ),
                             ],
@@ -278,7 +278,7 @@ class _EnvironmentCheckerScreenState extends State<EnvironmentCheckerScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Current Reading',
+                            '현재 측정값',
                             style: theme.textTheme.titleMedium,
                           ),
                           const SizedBox(height: 16),
@@ -287,7 +287,7 @@ class _EnvironmentCheckerScreenState extends State<EnvironmentCheckerScreen> {
                               Expanded(
                                 child: _buildReadingTile(
                                   icon: Icons.wb_sunny_rounded,
-                                  label: 'Light',
+                                  label: '조도',
                                   value: '${latest.lux.toStringAsFixed(1)} lux',
                                   color: const Color(0xFFf5a623),
                                 ),
@@ -296,7 +296,7 @@ class _EnvironmentCheckerScreenState extends State<EnvironmentCheckerScreen> {
                               Expanded(
                                 child: _buildReadingTile(
                                   icon: Icons.volume_up_rounded,
-                                  label: 'Noise',
+                                  label: '소음',
                                   value:
                                       '${latest.noiseDb.toStringAsFixed(1)} dB',
                                   color: const Color(0xFF4a90d9),
@@ -335,7 +335,7 @@ class _EnvironmentCheckerScreenState extends State<EnvironmentCheckerScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Sleep Environment Analysis (Last 10 min)',
+                          '수면 환경 분석 (최근 10분)',
                           style: theme.textTheme.titleMedium,
                         ),
                         const SizedBox(height: 16),
@@ -366,22 +366,22 @@ class _EnvironmentCheckerScreenState extends State<EnvironmentCheckerScreen> {
                                 color: theme.colorScheme.primary),
                             const SizedBox(width: 8),
                             Text(
-                              'Environment Standards',
+                              '환경 기준',
                               style: theme.textTheme.titleMedium,
                             ),
                           ],
                         ),
                         const SizedBox(height: 12),
                         _buildStandardRow(
-                            'Good', 'Light ≤ 50 lux, Noise ≤ 40 dB',
+                            '좋음', '조도 ≤ 50 lux, 소음 ≤ 40 dB',
                             Colors.green),
                         const SizedBox(height: 8),
                         _buildStandardRow(
-                            'Caution', 'Light 50-80 lux, Noise 40-50 dB',
+                            '주의', '조도 50-80 lux, 소음 40-50 dB',
                             Colors.orange),
                         const SizedBox(height: 8),
                         _buildStandardRow(
-                            'Poor', 'Light ≥ 80 lux, Noise ≥ 50 dB',
+                            '나쁨', '조도 ≥ 80 lux, 소음 ≥ 50 dB',
                             Colors.red),
                       ],
                     ),
@@ -435,7 +435,7 @@ class _EnvironmentCheckerScreenState extends State<EnvironmentCheckerScreen> {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                    content: Text('Local data deleted')),
+                                    content: Text('로컬 데이터가 삭제되었습니다')),
                               );
                             }
                           }
@@ -588,7 +588,7 @@ class LuxNoiseDetailPage extends StatelessWidget {
                 // Light Graph Card
                 _buildGraphCard(
                   context: context,
-                  title: 'Light Level',
+                  title: '조도 수준',
                   icon: Icons.wb_sunny_rounded,
                   iconColor: const Color(0xFFFF9500),
                   gradientColors: [const Color(0xFFFFB74D), const Color(0xFFFF9500)],
@@ -608,7 +608,7 @@ class LuxNoiseDetailPage extends StatelessWidget {
                 // Noise Graph Card
                 _buildGraphCard(
                   context: context,
-                  title: 'Noise Level',
+                  title: '소음 수준',
                   icon: Icons.volume_up_rounded,
                   iconColor: const Color(0xFF2196F3),
                   gradientColors: [const Color(0xFF64B5F6), const Color(0xFF2196F3)],
@@ -636,7 +636,7 @@ class LuxNoiseDetailPage extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Displaying data from the last 10 minutes. Data updates every 5 seconds.',
+                            '최근 10분간의 데이터를 표시합니다. 데이터는 5초마다 업데이트됩니다.',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -702,7 +702,7 @@ class LuxNoiseDetailPage extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Last 10 minutes',
+                        '최근 10분',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -735,9 +735,9 @@ class LuxNoiseDetailPage extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatItem('Avg', avgValue, unit, iconColor),
-                _buildStatItem('Min', minValue, unit, Colors.green),
-                _buildStatItem('Max', maxValue, unit, Colors.red),
+                _buildStatItem('평균', avgValue, unit, iconColor),
+                _buildStatItem('최소', minValue, unit, Colors.green),
+                _buildStatItem('최대', maxValue, unit, Colors.red),
               ],
             ),
 
@@ -755,7 +755,7 @@ class LuxNoiseDetailPage extends StatelessWidget {
                               size: 48, color: theme.colorScheme.outline),
                           const SizedBox(height: 8),
                           Text(
-                            'No data available',
+                            '데이터 없음',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.outline,
                             ),
@@ -932,7 +932,7 @@ class DailyStatsPage extends StatelessWidget {
 
     if (log.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text("Today's Statistics")),
+        appBar: AppBar(title: const Text("오늘의 통계")),
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -941,12 +941,12 @@ class DailyStatsPage extends StatelessWidget {
                   size: 64, color: theme.colorScheme.outline),
               const SizedBox(height: 16),
               Text(
-                'No records yet.',
+                '기록이 없습니다.',
                 style: theme.textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
               Text(
-                'Start the environment monitor to collect data.',
+                '환경 모니터를 시작하여 데이터를 수집하세요.',
                 style: theme.textTheme.bodySmall,
               ),
             ],
@@ -975,7 +975,7 @@ class DailyStatsPage extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Today's Environment Statistics")),
+      appBar: AppBar(title: const Text("오늘의 환경 통계")),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -1005,7 +1005,7 @@ class DailyStatsPage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Total Measurements',
+                              '총 측정 횟수',
                               style: theme.textTheme.bodySmall,
                             ),
                             Text(
@@ -1129,7 +1129,7 @@ class DailyStatsPage extends StatelessWidget {
         const SizedBox(width: 12),
         Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
         const Spacer(),
-        Text('$count times',
+        Text('$count회',
             style: TextStyle(color: color, fontWeight: FontWeight.bold)),
       ],
     );

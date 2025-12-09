@@ -29,7 +29,7 @@ class SleepMusicScreen extends StatelessWidget {
 
                 // Sound Options Grid
                 const Text(
-                  '🎵 Select Sound',
+                  '🎵 소리 선택',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -95,7 +95,7 @@ class SleepMusicScreen extends StatelessWidget {
                 const Icon(Icons.volume_up),
                 const SizedBox(width: 8),
                 const Text(
-                  'Volume',
+                  '볼륨',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -136,7 +136,7 @@ class SleepMusicScreen extends StatelessWidget {
                 const Icon(Icons.timer),
                 const SizedBox(width: 8),
                 const Text(
-                  'Duration',
+                  '재생 시간',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -173,11 +173,11 @@ class SleepMusicScreen extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () => provider.setDuration(60),
-                  child: const Text('1 hour'),
+                  child: const Text('1시간'),
                 ),
                 TextButton(
                   onPressed: () => provider.setDuration(120),
-                  child: const Text('2 hours'),
+                  child: const Text('2시간'),
                 ),
               ],
             ),
@@ -207,7 +207,7 @@ class SleepMusicScreen extends StatelessWidget {
               size: 32,
             ),
             label: Text(
-              provider.isPlaying ? 'Pause' : 'Play',
+              provider.isPlaying ? '일시정지' : '재생',
               style: const TextStyle(fontSize: 18),
             ),
             style: FilledButton.styleFrom(
@@ -223,7 +223,7 @@ class SleepMusicScreen extends StatelessWidget {
                 : null,
             icon: const Icon(Icons.stop, size: 32),
             label: const Text(
-              'Stop',
+              '중지',
               style: TextStyle(fontSize: 18),
             ),
             style: OutlinedButton.styleFrom(
@@ -271,7 +271,7 @@ class _NowPlayingCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Now Playing',
+                        '재생 중',
                         style: TextStyle(
                           color: Colors.white70,
                           fontSize: 14,

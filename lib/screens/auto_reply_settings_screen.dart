@@ -160,7 +160,7 @@ class _AutoReplySettingsScreenState extends State<AutoReplySettingsScreen> {
       debugPrint('Failed to start service: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to start service: $e')),
+        SnackBar(content: Text('서비스 시작 실패: $e')),
       );
     }
   }
@@ -215,7 +215,7 @@ class _AutoReplySettingsScreenState extends State<AutoReplySettingsScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      _isServiceRunning ? 'Service Running' : 'Service Stopped',
+                      _isServiceRunning ? '서비스 실행 중' : '서비스 중지됨',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -246,7 +246,7 @@ class _AutoReplySettingsScreenState extends State<AutoReplySettingsScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Restart service after editing rules',
+                  '규칙 수정 후 서비스를 다시 시작하세요',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey.shade600,
@@ -272,7 +272,7 @@ class _AutoReplySettingsScreenState extends State<AutoReplySettingsScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'No auto reply rules',
+                          '자동 응답 규칙 없음',
                           style: TextStyle(
                             fontSize: 20,
                             color: Colors.grey.shade600,
@@ -280,7 +280,7 @@ class _AutoReplySettingsScreenState extends State<AutoReplySettingsScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Tap + to add a rule',
+                          '+ 버튼을 눌러 규칙을 추가하세요',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade500,

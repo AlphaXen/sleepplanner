@@ -20,148 +20,183 @@ class SleepTips {
   // All available tips for auto-rotation
   static const List<SleepTip> _allTips = [
     SleepTip(
-      title: '☀️ Morning Sunlight',
+      title: '☀️ 아침 햇빛',
       description:
-          'Get 10-15 minutes of natural sunlight within an hour of waking up to regulate your circadian rhythm.',
+          '기상 후 1시간 이내에 10-15분간 자연광을 받아 생체리듬을 조절하세요.',
       icon: Icons.wb_sunny,
-      timeLabel: 'Morning Routine',
+      timeLabel: '아침 루틴',
       gradientColors: [Color(0xFFf093fb), Color(0xFFf5576c)],
     ),
     SleepTip(
-      title: '☕ Caffeine Cutoff',
+      title: '☕ 카페인 컷오프',
       description:
-          'Avoid caffeine after 2 PM. Caffeine has a half-life of 5-6 hours and can disrupt your sleep.',
+          '오후 2시 이후에는 카페인을 피하세요. 카페인의 반감기는 5-6시간이며 수면을 방해할 수 있습니다.',
       icon: Icons.coffee,
-      timeLabel: 'Afternoon Alert',
+      timeLabel: '오후 주의',
       gradientColors: [Color(0xFF667eea), Color(0xFF764ba2)],
     ),
     SleepTip(
-      title: '🌙 Wind Down',
+      title: '🌙 취침 준비',
       description:
-          'Start your bedtime routine 1-2 hours before sleep. Dim lights and reduce screen time.',
+          '수면 1-2시간 전부터 취침 준비를 시작하세요. 조명을 어둡게 하고 화면 사용을 줄이세요.',
       icon: Icons.nightlight_round,
-      timeLabel: 'Evening Prep',
+      timeLabel: '저녁 준비',
       gradientColors: [Color(0xFF11998e), Color(0xFF38ef7d)],
     ),
     SleepTip(
-      title: '😴 Sleep Time',
+      title: '😴 수면 시간',
       description:
-          'Your bedroom should be cool (60-67°F), dark, and quiet. Consider using a sleep mask or white noise.',
+          '침실은 시원하게(15-19°C), 어둡고 조용하게 유지하세요. 수면 마스크나 백색 소음을 고려해보세요.',
       icon: Icons.bedtime,
-      timeLabel: 'Night Time',
+      timeLabel: '밤 시간',
       gradientColors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
     ),
     SleepTip(
-      title: '⏰ Consistent Schedule',
+      title: '⏰ 규칙적인 일정',
       description:
-          'Go to bed and wake up at the same time every day, even on weekends.',
+          '매일 같은 시간에 잠자리에 들고 일어나세요. 주말에도 일정을 유지하는 것이 좋습니다.',
       icon: Icons.schedule,
-      timeLabel: 'Daily Habit',
+      timeLabel: '일상 습관',
       gradientColors: [Color(0xFF667eea), Color(0xFF764ba2)],
     ),
     SleepTip(
-      title: '🏃 Regular Exercise',
+      title: '🏃 규칙적인 운동',
       description:
-          'Exercise regularly, but finish at least 3 hours before bedtime.',
+          '규칙적으로 운동하되, 취침 최소 3시간 전에는 운동을 마치세요.',
       icon: Icons.fitness_center,
-      timeLabel: 'Physical Health',
+      timeLabel: '신체 건강',
       gradientColors: [Color(0xFF56ab2f), Color(0xFFa8e063)],
     ),
     SleepTip(
-      title: '🍽️ Light Dinner',
+      title: '🍽️ 가벼운 저녁식사',
       description:
-          'Avoid heavy meals 2-3 hours before bed. Try a light snack if hungry.',
+          '취침 2-3시간 전에는 무거운 식사를 피하세요. 배가 고프면 가벼운 간식을 드세요.',
       icon: Icons.restaurant,
-      timeLabel: 'Evening Meal',
+      timeLabel: '저녁 식사',
       gradientColors: [Color(0xFFf093fb), Color(0xFFf5576c)],
     ),
     SleepTip(
-      title: '📱 Screen Time',
+      title: '📱 화면 사용 시간',
       description:
-          'Turn off screens 1 hour before bed. Blue light suppresses melatonin production.',
+          '취침 1시간 전에는 화면을 끄세요. 파란 빛은 멜라토닌 생성을 억제합니다.',
       icon: Icons.phone_iphone,
-      timeLabel: 'Digital Detox',
+      timeLabel: '디지털 디톡스',
       gradientColors: [Color(0xFF11998e), Color(0xFF38ef7d)],
     ),
     SleepTip(
-      title: '🧘 Relaxation',
+      title: '🧘 휴식',
       description:
-          'Practice relaxation techniques like meditation, deep breathing, or gentle yoga.',
+          '명상, 깊은 호흡, 부드러운 요가 같은 휴식 기법을 실천하세요.',
       icon: Icons.self_improvement,
-      timeLabel: 'Mind & Body',
+      timeLabel: '마음과 몸',
       gradientColors: [Color(0xFF7F7FD5), Color(0xFF91EAE4)],
     ),
     SleepTip(
-      title: '🌡️ Cool Room',
+      title: '🌡️ 시원한 방',
       description:
-          'Keep your bedroom between 60-67°F (15-19°C) for optimal sleep.',
+          '최적의 수면을 위해 침실 온도를 15-19°C로 유지하세요.',
       icon: Icons.thermostat,
-      timeLabel: 'Environment',
+      timeLabel: '환경',
       gradientColors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
     ),
     SleepTip(
-      title: '🛏️ Bed = Sleep',
+      title: '🛏️ 침대 = 수면',
       description:
-          'Use your bed only for sleep. Avoid working or watching TV in bed.',
+          '침대는 수면에만 사용하세요. 침대에서 일하거나 TV를 보는 것을 피하세요.',
       icon: Icons.hotel,
-      timeLabel: 'Sleep Association',
+      timeLabel: '수면 연상',
       gradientColors: [Color(0xFF667eea), Color(0xFF764ba2)],
     ),
     SleepTip(
-      title: '💤 20-Minute Rule',
+      title: '💤 20분 규칙',
       description:
-          'If you can\'t sleep after 20 minutes, get up and do a relaxing activity.',
+          '20분 후에도 잠이 오지 않으면 일어나서 편안한 활동을 하세요.',
       icon: Icons.timer,
-      timeLabel: 'Sleep Strategy',
+      timeLabel: '수면 전략',
       gradientColors: [Color(0xFF56ab2f), Color(0xFFa8e063)],
     ),
     SleepTip(
-      title: '🚫 Alcohol Limit',
+      title: '🚫 알코올 제한',
       description:
-          'Avoid alcohol before bed. It disrupts REM sleep and causes fragmented sleep.',
+          '취침 전 알코올을 피하세요. REM 수면을 방해하고 단편적인 수면을 유발합니다.',
       icon: Icons.no_drinks,
-      timeLabel: 'Evening Routine',
+      timeLabel: '저녁 루틴',
       gradientColors: [Color(0xFFf093fb), Color(0xFFf5576c)],
     ),
     SleepTip(
-      title: '☕ Morning Coffee',
+      title: '☕ 아침 커피',
       description:
-          'Have your coffee in the morning. Wait 90 minutes after waking for optimal effect.',
+          '커피는 아침에 마시세요. 기상 후 90분을 기다리면 최적의 효과를 얻을 수 있습니다.',
       icon: Icons.coffee_maker,
-      timeLabel: 'Morning Boost',
+      timeLabel: '아침 활력',
       gradientColors: [Color(0xFF11998e), Color(0xFF38ef7d)],
     ),
     SleepTip(
-      title: '😌 Stress Management',
+      title: '😌 스트레스 관리',
       description:
-          'Write down worries before bed. Keep a journal or to-do list for tomorrow.',
+          '취침 전 걱정거리를 적어보세요. 일기나 내일 할 일 목록을 작성하세요.',
       icon: Icons.book,
-      timeLabel: 'Mental Health',
+      timeLabel: '정신 건강',
       gradientColors: [Color(0xFF7F7FD5), Color(0xFF91EAE4)],
     ),
     SleepTip(
-      title: '🌅 Natural Light',
+      title: '🌅 자연광',
       description:
-          'Expose yourself to bright light during the day to maintain healthy sleep-wake cycles.',
+          '낮 동안 밝은 빛에 노출되어 건강한 수면-각성 주기를 유지하세요.',
       icon: Icons.light_mode,
-      timeLabel: 'Daytime Habit',
+      timeLabel: '낮 시간 습관',
       gradientColors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
     ),
   ];
 
-  /// Get time-based tip based on current hour
-  static SleepTip getTimeBasedTip() {
-    final hour = DateTime.now().hour;
+  // 시간대별 팁 분류
+  // 아침: 5-11시
+  static const List<int> _morningTips = [0, 14, 15]; // 아침 햇빛, 아침 커피, 자연광
+  
+  // 점심: 12-15시
+  static const List<int> _afternoonTips = [1, 4, 5]; // 카페인 컷오프, 규칙적인 일정, 규칙적인 운동
+  
+  // 저녁: 16-20시
+  static const List<int> _eveningTips = [2, 6, 7, 8, 9, 11, 12]; // 취침 준비, 가벼운 저녁식사, 화면 사용 시간, 휴식, 시원한 방, 알코올 제한, 스트레스 관리
+  
+  // 밤: 21-4시
+  static const List<int> _nightTips = [3, 4, 5, 10, 13]; // 수면 시간, 규칙적인 일정, 규칙적인 운동, 침대=수면, 20분 규칙
 
+  /// 현재 시간대에 맞는 팁 인덱스 리스트 가져오기
+  static List<int> _getTipsForCurrentTime() {
+    final hour = DateTime.now().hour;
     if (hour >= 5 && hour < 12) {
-      return _allTips[0]; // Morning Sunlight
+      return _morningTips;
     } else if (hour >= 12 && hour < 16) {
-      return _allTips[1]; // Caffeine Cutoff
+      return _afternoonTips;
     } else if (hour >= 16 && hour < 21) {
-      return _allTips[2]; // Wind Down
+      return _eveningTips;
     } else {
-      return _allTips[3]; // Sleep Time
+      return _nightTips;
     }
+  }
+
+  /// 현재 시간대에 맞는 모든 팁을 랜덤 순서로 가져오기
+  static List<SleepTip> getTimeBasedTipsShuffled() {
+    final tipIndices = _getTipsForCurrentTime();
+    // 랜덤 셔플 (시드 기반으로 일관성 유지)
+    final shuffled = List<int>.from(tipIndices);
+    shuffled.shuffle();
+    return shuffled.map((index) => _allTips[index]).toList();
+  }
+
+  /// 현재 시간대에 맞는 랜덤 팁 가져오기
+  static SleepTip getTimeBasedRandomTip() {
+    final tipsForTime = _getTipsForCurrentTime();
+    // 랜덤 선택
+    final random = DateTime.now().millisecondsSinceEpoch % tipsForTime.length;
+    final tipIndex = tipsForTime[random];
+    return _allTips[tipIndex];
+  }
+
+  /// Get time-based tip based on current hour (기존 메서드 유지 - 호환성)
+  static SleepTip getTimeBasedTip() {
+    return getTimeBasedRandomTip();
   }
 
   /// Get rotating tip based on time (changes every 10 seconds for demo)

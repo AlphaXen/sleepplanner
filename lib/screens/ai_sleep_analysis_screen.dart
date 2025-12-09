@@ -119,12 +119,8 @@ class _AISleepAnalysisScreenState extends State<AISleepAnalysisScreen> {
                       _buildEnvironmentCard(),
                       const SizedBox(height: 16),
 
-                      // 현재 적응형 파라미터
-                      _buildAdaptiveParamsCard(),
-                      const SizedBox(height: 16),
-
-                      // 적응형 파라미터 업데이트 버튼
-                      _buildUpdateParamsButton(),
+                      // 적응형 수면 시스템 섹션
+                      _buildAdaptiveSleepSection(),
                       const SizedBox(height: 32),
                     ],
                   ),
@@ -138,24 +134,62 @@ class _AISleepAnalysisScreenState extends State<AISleepAnalysisScreen> {
 
     final feedbackProvider = Provider.of<FeedbackProvider>(context, listen: false);
     final recentFeedbacks = feedbackProvider.getRecentFeedbacks(_selectedDays);
+    final sleepProvider = Provider.of<SleepProvider>(context, listen: false);
     
     // 데이터가 충분한지 확인 (최소 3일 이상의 피드백)
     final hasEnoughData = recentFeedbacks.length >= 3;
+    final hasSleepEntries = sleepProvider.entries.length >= 3;
 
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: FilledButton.icon(
-        onPressed: hasEnoughData ? _updateAdaptiveParams : null,
-        icon: const Icon(Icons.auto_fix_high),
-        label: const Text(
-          'AI 파라미터 자동 조정',
-          style: TextStyle(fontSize: 16),
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: FilledButton.icon(
+            onPressed: (hasEnoughData && hasSleepEntries) ? _updateAdaptiveParams : null,
+            icon: const Icon(Icons.auto_fix_high),
+            label: const Text(
+              '✨ AI 파라미터 자동 조정',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.purple.shade600,
+              disabledBackgroundColor: Colors.grey.shade300,
+            ),
+          ),
         ),
-        style: FilledButton.styleFrom(
-          backgroundColor: Colors.purple.shade600,
+        if (!hasEnoughData || !hasSleepEntries) ...[
+          const SizedBox(height: 8),
+          Text(
+            hasEnoughData 
+                ? '최소 3일 이상의 수면 기록이 필요합니다'
+                : hasSleepEntries
+                    ? '최소 3일 이상의 피드백이 필요합니다'
+                    : '수면 기록과 피드백을 더 추가해주세요',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const SleepFeedbackScreen(),
+              ),
+            ).then((_) => _performAnalysis());
+          },
+          icon: const Icon(Icons.add_chart),
+          label: const Text('피드백 추가하기'),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(double.infinity, 45),
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -357,14 +391,14 @@ class _AISleepAnalysisScreenState extends State<AISleepAnalysisScreen> {
     final result = _analysisResult!;
 
     return SizedBox(
-      height: 220, // 명시적 높이 지정으로 overflow 방지
+      height: 240, // 높이를 조금 늘림
       child: GridView.count(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         crossAxisCount: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 1.5,
+        childAspectRatio: 1.4, // 비율 조정
         children: [
           _buildMetricCard(
             '평균 수면',
@@ -398,26 +432,39 @@ class _AISleepAnalysisScreenState extends State<AISleepAnalysisScreen> {
   Widget _buildMetricCard(
       String label, String value, IconData icon, Color color) {
     return Card(
-      child: Container(
-        padding: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: color,
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 6),
+            Flexible(
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 12),
-              textAlign: TextAlign.center,
+            Flexible(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+              ),
             ),
           ],
         ),
@@ -824,6 +871,49 @@ class _AISleepAnalysisScreenState extends State<AISleepAnalysisScreen> {
     );
   }
 
+  Widget _buildAdaptiveSleepSection() {
+    final result = _analysisResult;
+    if (result == null) return const SizedBox.shrink();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 섹션 제목
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: Row(
+            children: [
+              const Icon(Icons.auto_fix_high, color: Colors.purple),
+              const SizedBox(width: 8),
+              Expanded(
+                child: const Text(
+                  '적응형 수면 시스템',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        // 적응형 파라미터 카드
+        _buildAdaptiveParamsCard(),
+        const SizedBox(height: 16),
+        
+        // 피드백 및 자동 조정 안내 카드
+        _buildAdaptiveSystemInfoCard(),
+        const SizedBox(height: 16),
+        
+        // AI 자동 조정 버튼
+        _buildUpdateParamsButton(),
+      ],
+    );
+  }
+
   Widget _buildAdaptiveParamsCard() {
     final result = _analysisResult!;
     final params = result.currentParams;
@@ -831,6 +921,7 @@ class _AISleepAnalysisScreenState extends State<AISleepAnalysisScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Card(
+      elevation: 2,
       color: isDark 
           ? theme.colorScheme.surfaceContainerHighest 
           : Colors.purple.shade50,
@@ -862,12 +953,13 @@ class _AISleepAnalysisScreenState extends State<AISleepAnalysisScreen> {
                     child: Text(
                       '현재 적응형 파라미터',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: isDark 
                             ? Colors.purpleAccent 
                             : Colors.purple.shade700,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Icon(
@@ -879,28 +971,117 @@ class _AISleepAnalysisScreenState extends State<AISleepAnalysisScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               Text(
-                '탭하여 수동 조정',
+                '탭하여 수동으로 조정할 수 있습니다',
                 style: TextStyle(
                   fontSize: 12,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 12),
-              _buildParamRow('목표 수면시간', '${params.tSleep.toStringAsFixed(1)}h'),
+              const SizedBox(height: 16),
+              _buildParamRow('🛌 목표 수면시간', '${params.tSleep.toStringAsFixed(1)}h'),
+              const Divider(height: 16),
               _buildParamRow(
-                  '카페인 제한', '취침 ${params.cafWindow.toStringAsFixed(1)}h 전'),
+                  '☕ 카페인 제한', '취침 ${params.cafWindow.toStringAsFixed(1)}h 전'),
+              const Divider(height: 16),
               _buildParamRow(
-                  '취침 준비', '${params.winddownMinutes}분 전부터'),
-              _buildParamRow('크로노타입 오프셋',
+                  '🌙 취침 준비', '${params.winddownMinutes}분 전부터'),
+              const Divider(height: 16),
+              _buildParamRow('⏰ 크로노타입 오프셋',
                   '${params.chronoOffset >= 0 ? '+' : ''}${params.chronoOffset.toStringAsFixed(1)}h'),
+              const Divider(height: 16),
               _buildParamRow(
-                  '빛 민감도', '${(params.lightSens * 100).round()}%'),
+                  '💡 빛 민감도', '${(params.lightSens * 100).round()}%'),
+              const Divider(height: 16),
               _buildParamRow(
-                  '카페인 민감도', '${(params.cafSens * 100).round()}%'),
+                  '☕ 카페인 민감도', '${(params.cafSens * 100).round()}%'),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAdaptiveSystemInfoCard() {
+    final feedbackProvider = Provider.of<FeedbackProvider>(context, listen: false);
+    final recentFeedbacks = feedbackProvider.getRecentFeedbacks(_selectedDays);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final hasEnoughData = recentFeedbacks.length >= 3;
+
+    return Card(
+      color: isDark 
+          ? theme.colorScheme.surfaceContainer 
+          : Colors.blue.shade50,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: isDark 
+                      ? theme.colorScheme.primary 
+                      : Colors.blue.shade700,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '적응형 시스템 작동 방식',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isDark 
+                        ? theme.colorScheme.primary 
+                        : Colors.blue.shade700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '• AI가 수면 기록과 피드백을 분석하여\n  파라미터를 자동으로 조정합니다',
+              style: TextStyle(
+                fontSize: 14,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '• 주간 피드백을 추가하면 더 정확한\n  추천을 받을 수 있습니다',
+              style: TextStyle(
+                fontSize: 14,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (!hasEnoughData)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber, color: Colors.orange.shade700, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '자동 조정을 위해서는 최소 3일 이상의 피드백이 필요합니다. (현재: ${recentFeedbacks.length}일)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.orange.shade900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -913,16 +1094,28 @@ class _AISleepAnalysisScreenState extends State<AISleepAnalysisScreen> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(color: theme.colorScheme.onSurface),
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(color: theme.colorScheme.onSurface),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+            ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 1,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.right,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

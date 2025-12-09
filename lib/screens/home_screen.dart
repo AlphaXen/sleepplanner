@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../providers/sleep_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/schedule_provider.dart';
+import '../providers/settings_provider.dart';
+import '../models/shift_info.dart';
+import '../utils/date_utils.dart';
+import 'settings_screen.dart';
+import 'daily_plan_screen.dart';
 import '../models/sleep_entry.dart';
 import '../widgets/daily_tip_card.dart';
 import '../services/sleep_api_service.dart';
@@ -37,25 +43,120 @@ class _HomeScreenState extends State<HomeScreen> {
       sleepProvider.setUser(authProvider.user);
       
       // Firebase에서 데이터 로드 후 스케줄 자동 생성
+      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
       if (authProvider.isAuthenticated) {
         await sleepProvider.syncWithFirestore();
         if (sleepProvider.entries.isNotEmpty) {
-          await scheduleProvider.generateScheduleFromSleepEntries(sleepProvider.entries);
+          await scheduleProvider.generateScheduleFromSleepEntries(
+            sleepProvider.entries,
+            dayStartHour: settingsProvider.dayStartHour,
+          );
         }
       }
+      
+      // 오늘의 적응형 수면 계획 자동 생성
+      _updateTodayPlan(sleepProvider, scheduleProvider, settingsProvider);
     });
+  }
+  
+  /// 오늘의 적응형 수면 계획 업데이트
+  void _updateTodayPlan(SleepProvider sleepProvider, ScheduleProvider scheduleProvider, SettingsProvider settingsProvider) {
+    final now = DateTime.now();
+    final today = getTodayKey(settingsProvider.dayStartHour);
+    final schedule = scheduleProvider.currentSchedule;
+    
+    debugPrint('🕐 적응형 수면 계획 생성 시작');
+    debugPrint('   현재 시간: ${now.toString()}');
+    debugPrint('   오늘 날짜 키: ${today.toString()}');
+    debugPrint('   하루 시작 시간: ${settingsProvider.dayStartHour}시');
+    
+    if (schedule != null) {
+      debugPrint('   주간 스케줄 존재: ${schedule.weekStart.toString()}');
+      
+      // 주간 스케줄이 현재 주인지 확인
+      final scheduleWeekStart = schedule.weekStart;
+      final currentWeekStart = today.subtract(Duration(days: today.weekday - 1));
+      
+      // 같은 주인지 확인 (일주일 내)
+      final daysDiff = today.difference(scheduleWeekStart).inDays;
+      final isSameWeek = daysDiff >= 0 && daysDiff < 7;
+      
+      debugPrint('   스케줄 주 시작: ${scheduleWeekStart.toString()}');
+      debugPrint('   현재 주 시작: ${currentWeekStart.toString()}');
+      debugPrint('   주 차이: $daysDiff일 (같은 주: $isSameWeek)');
+      
+      ShiftInfo? todayShift;
+      if (isSameWeek) {
+        todayShift = schedule.getShiftForDate(today);
+      } else {
+        // 다른 주면 요일만 매칭 (임시 조치)
+        final dayOfWeek = today.weekday - 1;
+        todayShift = schedule.shifts[dayOfWeek];
+        debugPrint('   ⚠️ 다른 주 스케줄 - 요일만 매칭 (요일: $dayOfWeek)');
+      }
+      
+      if (todayShift != null) {
+        debugPrint('   오늘 근무 유형: ${todayShift.type}');
+        if (todayShift.shiftStart != null) {
+          debugPrint('   근무 시작: ${todayShift.shiftStart.toString()}');
+        }
+        if (todayShift.shiftEnd != null) {
+          debugPrint('   근무 종료: ${todayShift.shiftEnd.toString()}');
+        }
+        if (todayShift.preferredMid != null) {
+          debugPrint('   선호 수면 중간: ${todayShift.preferredMid.toString()}');
+        }
+        
+        // 주간 스케줄과 함께 전달
+        sleepProvider.computeTodayPlanForShift(
+          shift: todayShift,
+          weeklySchedule: schedule,
+          dayStartHour: settingsProvider.dayStartHour,
+        );
+        
+        // 생성된 계획 확인
+        final plan = sleepProvider.lastDailyPlan;
+        if (plan != null) {
+          debugPrint('   ✅ 계획 생성 완료:');
+          debugPrint('      수면 시작: ${plan.mainSleepStart.toString()}');
+          debugPrint('      수면 종료: ${plan.mainSleepEnd.toString()}');
+          debugPrint('      카페인 컷오프: ${plan.caffeineCutoff.toString()}');
+          debugPrint('      취침 준비: ${plan.winddownStart.toString()}');
+        } else {
+          debugPrint('   ⚠️ 계획 생성 실패 - 근무 시간대일 수 있음');
+        }
+      } else {
+        debugPrint('   ⚠️ 오늘 근무 정보 없음 - 주간 스케줄만 전달');
+        // 오늘 근무 정보는 없지만 주간 스케줄은 있으므로 스케줄만 전달
+        sleepProvider.computeTodayPlanForShift(
+          shift: null,
+          weeklySchedule: schedule,
+          dayStartHour: settingsProvider.dayStartHour,
+        );
+      }
+    } else {
+      debugPrint('   ⚠️ 주간 스케줄 없음 - 기본 휴무로 처리');
+      // 스케줄이 아예 없으면 기본 휴무로 처리 (오늘 날짜 사용)
+      final defaultOff = ShiftInfo.off(preferredMid: DateTime(now.year, now.month, now.day, 3, 0));
+      sleepProvider.computeTodayPlanForShift(
+        shift: defaultOff,
+        weeklySchedule: null,
+        dayStartHour: settingsProvider.dayStartHour,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<SleepProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
-    final duration = provider.todaySleepDuration;
-    final progress = provider.todayProgress;
+    final settingsProvider = Provider.of<SettingsProvider>(context);
+    final duration = provider.getTodaySleepDuration(settingsProvider.dayStartHour);
+    final progress = provider.getTodayProgress(settingsProvider.dayStartHour, settingsProvider.dailyTargetHours);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sleep Planner'),
+        title: const Text('Z-Maker'),
         actions: [
           // 클라우드 상태 표시 (로그인 상태일 때만)
           if (authProvider.isAuthenticated)
@@ -106,6 +207,15 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
           IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: '설정',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.show_chart),
             tooltip: '통계/그래프',
             onPressed: () {
@@ -123,13 +233,14 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               children: [
                 _buildTodaySummary(
-                    context, duration, progress, provider.dailyTargetHours),
+                    context, duration, progress, settingsProvider.dailyTargetHours),
+                const SizedBox(height: 16),
+                // 적응형 수면 추천 카드 추가
+                _buildAdaptiveRecommendationCard(context),
                 const SizedBox(height: 16),
                 const DailyTipCard(),
                 const SizedBox(height: 16),
                 _buildFeatureGrid(context),
-                const SizedBox(height: 16),
-                _buildTargetEditor(context, provider),
                 const SizedBox(height: 16),
                 _buildEntryList(context),
                 const SizedBox(height: 80),
@@ -265,7 +376,7 @@ class _HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(builder: (_) => const EnvironmentCheckerScreen()),
           ),
           child: _buildFeatureCardWidget(
-            '환경',
+            '환경 체커',
             Icons.nightlight_round,
             const [Color(0xFF2c3e50), Color(0xFF4ca1af)],
           ),
@@ -343,30 +454,226 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /* ===================== Target Editor ====================== */
+  /* ===================== Adaptive Recommendation Card ====================== */
 
-  Widget _buildTargetEditor(BuildContext context, SleepProvider provider) {
-    final controller =
-        TextEditingController(text: provider.dailyTargetHours.toString());
+  Widget _buildAdaptiveRecommendationCard(BuildContext context) {
+    return Consumer<SleepProvider>(
+      builder: (context, sleepProvider, _) {
+        final plan = sleepProvider.lastDailyPlan;
+        final scheduleProvider = Provider.of<ScheduleProvider>(context);
+        final settingsProvider = Provider.of<SettingsProvider>(context);
+        
+        // 계획이 없으면 자동으로 생성 시도
+        if (plan == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _updateTodayPlan(sleepProvider, scheduleProvider, settingsProvider);
+          });
+        }
+        
+        if (plan == null) {
+          return Card(
+            color: Colors.blue.shade50,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.auto_awesome, color: Colors.blue.shade700),
+                      const SizedBox(width: 8),
+                      const Text(
+                        '오늘의 적응형 수면 추천',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    '근무 정보를 입력하거나 수면 기록을 추가하면\n맞춤형 수면 계획이 자동으로 생성됩니다.',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const IntegratedSleepManagementScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.arrow_forward),
+                      label: const Text('근무 정보 입력하러 가기'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final sleepDuration = plan.mainSleepEnd.difference(plan.mainSleepStart);
+        final sleepHours = sleepDuration.inHours;
+        final sleepMinutes = sleepDuration.inMinutes.remainder(60);
+        
+        String _formatTime(DateTime dt) {
+          return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+        }
+
+        return Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.purple.shade400, Colors.blue.shade400],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.auto_awesome, color: Colors.white, size: 24),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          '오늘의 적응형 수면 추천',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_forward, color: Colors.white),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const DailyPlanScreen(),
+                            ),
+                          );
+                        },
+                        tooltip: '전체 계획 보기',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // 수면 시간
+                  _buildRecommendationRow(
+                    icon: Icons.bedtime,
+                    label: '수면 시간',
+                    value: '${_formatTime(plan.mainSleepStart)} - ${_formatTime(plan.mainSleepEnd)}',
+                    subValue: '($sleepHours시간 ${sleepMinutes}분)',
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // 카페인 컷오프
+                  _buildRecommendationRow(
+                    icon: Icons.coffee,
+                    label: '카페인 컷오프',
+                    value: _formatTime(plan.caffeineCutoff),
+                    subValue: '이후 카페인 자제',
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // 취침 준비
+                  _buildRecommendationRow(
+                    icon: Icons.nightlight,
+                    label: '취침 준비',
+                    value: _formatTime(plan.winddownStart),
+                    subValue: '부터 시작',
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const DailyPlanScreen(),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('전체 계획 보기'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRecommendationRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    String? subValue,
+  }) {
     return Row(
       children: [
-        const Text('일일 목표 (시간):'),
+        Icon(icon, color: Colors.white70, size: 20),
         const SizedBox(width: 12),
-        SizedBox(
-          width: 80,
-          child: TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              isDense: true,
-              border: OutlineInputBorder(),
-            ),
-            onSubmitted: (v) {
-              final h = int.tryParse(v);
-              if (h != null && h > 0 && h <= 24) {
-                provider.setDailyTarget(h);
-              }
-            },
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Row(
+                children: [
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (subValue != null) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      subValue,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
           ),
         ),
       ],
@@ -392,13 +699,229 @@ class _HomeScreenState extends State<HomeScreen> {
           physics: const NeverScrollableScrollPhysics(),
           itemCount: provider.entries.length,
           itemBuilder: (context, index) {
-            final e = provider.entries[index];
-            return ListTile(
-              leading: Icon(e.isNightShift ? Icons.dark_mode : Icons.wb_sunny),
-              title: Text(
-                '${_formatDateTime(e.sleepTime)} → ${_formatDateTime(e.wakeTime)}',
+            final entry = provider.entries[index];
+            return Dismissible(
+              key: Key(entry.id ?? '${entry.sleepTime}_${entry.wakeTime}'),
+              direction: DismissDirection.endToStart,
+              background: Container(
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.only(right: 20),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.delete,
+                  color: Colors.white,
+                  size: 32,
+                ),
               ),
-              subtitle: Text('수면 시간: ${e.formattedDuration}'),
+              confirmDismiss: (direction) async {
+                // 삭제 확인
+                return await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('수면 기록 삭제'),
+                    content: const Text('이 수면 기록을 삭제하시겠습니까?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('취소'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        child: const Text('삭제'),
+                      ),
+                    ],
+                  ),
+                ) ?? false;
+              },
+              onDismissed: (direction) async {
+                // 삭제 실행
+                final scheduleProvider = Provider.of<ScheduleProvider>(context, listen: false);
+                final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+                
+                await provider.deleteEntry(entry);
+                
+                // 주간 스케줄 업데이트
+                if (provider.entries.isNotEmpty) {
+                  await scheduleProvider.generateScheduleFromSleepEntries(
+                    provider.entries,
+                    dayStartHour: settingsProvider.dayStartHour,
+                  );
+                }
+                
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('수면 기록이 삭제되었습니다'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+              child: GestureDetector(
+                onLongPress: () {
+                  // 진동 피드백
+                  HapticFeedback.mediumImpact();
+                  // 수정 다이얼로그 표시
+                  _showEditEntryDialog(context, entry);
+                },
+                child: Card(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  child: ListTile(
+                    leading: Icon(
+                      entry.isNightShift ? Icons.dark_mode : Icons.wb_sunny,
+                      color: entry.isNightShift ? Colors.indigo : Colors.orange,
+                    ),
+                    title: Text(
+                      '${_formatDateTime(entry.sleepTime)} → ${_formatDateTime(entry.wakeTime)}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text('수면 시간: ${entry.formattedDuration}'),
+                    trailing: Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Colors.grey.shade400,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /* ===================== Edit Entry Dialog ====================== */
+
+  Future<void> _showEditEntryDialog(BuildContext context, SleepEntry entry) async {
+    DateTime? sleepTime = entry.sleepTime;
+    DateTime? wakeTime = entry.wakeTime;
+    bool isNightShift = entry.isNightShift;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('수면 기록 수정'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          await _loadSleepApiData(context, setState,
+                              (sleep, wake) {
+                            sleepTime = sleep;
+                            wakeTime = wake;
+                          });
+                        },
+                        icon: const Icon(Icons.auto_awesome, size: 18),
+                        label: const Text('수면 API에서 불러오기'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildDateTimePicker(
+                      context: context,
+                      label: '취침 시간',
+                      value: sleepTime,
+                      onTap: () async {
+                        final result = await _pickDateTime(context, initialDateTime: sleepTime);
+                        if (result != null) setState(() => sleepTime = result);
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    _buildDateTimePicker(
+                      context: context,
+                      label: '기상 시간',
+                      value: wakeTime,
+                      onTap: () async {
+                        final result = await _pickDateTime(context, initialDateTime: wakeTime);
+                        if (result != null) setState(() => wakeTime = result);
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Text('야간 근무 수면?'),
+                        const Spacer(),
+                        Switch(
+                          value: isNightShift,
+                          onChanged: (v) => setState(() => isNightShift = v),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('취소'),
+                ),
+                FilledButton(
+                  onPressed: () async {
+                    if (sleepTime == null || wakeTime == null) return;
+                    if (wakeTime!.isBefore(sleepTime!)) return;
+
+                    final provider =
+                        Provider.of<SleepProvider>(context, listen: false);
+                    final scheduleProvider =
+                        Provider.of<ScheduleProvider>(context, listen: false);
+                    
+                    // 수면 기록 수정
+                    await provider.updateEntry(
+                      entry,
+                      SleepEntry(
+                        id: entry.id, // ID 유지
+                        sleepTime: sleepTime!,
+                        wakeTime: wakeTime!,
+                        isNightShift: isNightShift,
+                      ),
+                    );
+                    
+                    // 주간 스케줄 자동 생성 (수면 기록 기반)
+                    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+                    await scheduleProvider.generateScheduleFromSleepEntries(
+                      provider.entries,
+                      dayStartHour: settingsProvider.dayStartHour,
+                    );
+                    
+                    if (context.mounted) {
+                      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                      if (authProvider.isAuthenticated) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('수면 기록이 수정되었습니다 ✏️\n주간 스케줄이 업데이트되었습니다 📅'),
+                            duration: Duration(seconds: 3),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('수면 기록이 수정되었습니다 ✏️\n주간 스케줄이 업데이트되었습니다 📅'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  child: const Text('저장'),
+                ),
+              ],
             );
           },
         );
@@ -500,8 +1023,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                     
                     // 주간 스케줄 자동 생성 (수면 기록 기반)
+                    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
                     await scheduleProvider.generateScheduleFromSleepEntries(
                       provider.entries,
+                      dayStartHour: settingsProvider.dayStartHour,
                     );
                     
                     if (mounted) {
@@ -551,18 +1076,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<DateTime?> _pickDateTime(BuildContext context) async {
+  Future<DateTime?> _pickDateTime(BuildContext context, {DateTime? initialDateTime}) async {
     final now = DateTime.now();
+    final initial = initialDateTime ?? now;
     final date = await showDatePicker(
       context: context,
-      initialDate: now,
+      initialDate: initial,
       firstDate: DateTime(now.year - 1),
       lastDate: DateTime(now.year + 1),
     );
     if (date == null) return null;
     final time = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(now),
+      initialTime: TimeOfDay.fromDateTime(initial),
     );
     if (time == null) return null;
     return DateTime(date.year, date.month, date.day, time.hour, time.minute);
@@ -582,6 +1108,7 @@ class _HomeScreenState extends State<HomeScreen> {
     StateSetter setState,
     Function(DateTime, DateTime) onDataLoaded,
   ) async {
+    // 권한 확인
     var status = await Permission.activityRecognition.status;
     if (!status.isGranted) {
       status = await Permission.activityRecognition.request();
@@ -590,40 +1117,110 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!status.isGranted) {
       ScaffoldMessenger.of(dialogContext).showSnackBar(
         const SnackBar(
-            content: Text('Activity Recognition permission required')),
+          content: Text('활동 인식 권한이 필요합니다.\n설정에서 권한을 허용해주세요.'),
+          duration: Duration(seconds: 3),
+        ),
       );
       return;
     }
 
+    // 로딩 다이얼로그 표시
     showDialog(
       context: dialogContext,
       barrierDismissible: false,
       builder: (ctx) => const Center(child: CircularProgressIndicator()),
     );
 
-    await SleepApiService.instance.requestSleepUpdates();
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      debugPrint('🚀 Sleep API 데이터 로드 시작');
+      
+      // Sleep API 서비스 초기화
+      await SleepApiService.instance.init();
+      debugPrint('✅ SleepApiService 초기화 완료');
+      
+      // Sleep API 구독 요청
+      debugPrint('📡 Sleep API 구독 요청 중...');
+      final subscriptionSuccess = await SleepApiService.instance.requestSleepUpdates();
+      
+      if (!subscriptionSuccess) {
+        debugPrint('❌ Sleep API 구독 실패');
+        Navigator.pop(dialogContext);
+        ScaffoldMessenger.of(dialogContext).showSnackBar(
+          const SnackBar(
+            content: Text(
+              '수면 API 구독에 실패했습니다.\n'
+              '가능한 원인:\n'
+              '• Google Play Services가 설치/업데이트되지 않음\n'
+              '• 기기가 Sleep API를 지원하지 않음\n'
+              '• Google Fit 또는 건강 앱에서 수면 데이터가 없음\n\n'
+              '기본 추정값을 사용합니다.'
+            ),
+            duration: Duration(seconds: 5),
+          ),
+        );
+        final defaultData = SleepApiService.instance.getDefaultEstimate();
+        setState(() {
+          onDataLoaded(defaultData['sleepTime']!, defaultData['wakeTime']!);
+        });
+        return;
+      }
 
-    final apiData = await SleepApiService.instance.getLatestSleepData();
+      debugPrint('✅ Sleep API 구독 성공');
+      debugPrint('⏳ SleepReceiver가 데이터를 저장할 때까지 대기 중... (2초)');
+      
+      // 데이터가 수집될 때까지 잠시 대기 (Google Play Services가 데이터를 처리하고 SharedPreferences에 저장되는 시간 필요)
+      // SleepReceiver가 BroadcastReceiver이므로 약간의 지연이 필요
+      await Future.delayed(const Duration(seconds: 2));
 
-    Navigator.pop(dialogContext);
+      debugPrint('📖 최신 수면 데이터 읽기 시작...');
+      // 최신 수면 데이터 가져오기
+      final apiData = await SleepApiService.instance.getLatestSleepData();
+      debugPrint('📊 읽기 결과: ${apiData != null ? "데이터 발견" : "데이터 없음"}');
 
-    if (apiData != null) {
-      setState(() {
-        onDataLoaded(apiData['sleepTime']!, apiData['wakeTime']!);
-      });
+      Navigator.pop(dialogContext);
+
+      if (apiData != null) {
+        setState(() {
+          onDataLoaded(apiData['sleepTime']!, apiData['wakeTime']!);
+        });
+        ScaffoldMessenger.of(dialogContext).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Google Sleep API에서 수면 데이터를 불러왔습니다'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        final defaultData = SleepApiService.instance.getDefaultEstimate();
+        setState(() {
+          onDataLoaded(defaultData['sleepTime']!, defaultData['wakeTime']!);
+        });
+        ScaffoldMessenger.of(dialogContext).showSnackBar(
+          const SnackBar(
+            content: Text(
+              '⚠️ 수면 API 데이터를 찾을 수 없습니다.\n'
+              'Google Fit이나 건강 앱에서 수면 데이터를 기록해야 합니다.\n'
+              '기본 추정값을 사용합니다.'
+            ),
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      Navigator.pop(dialogContext);
+      debugPrint('Sleep API 로드 오류: $e');
       ScaffoldMessenger.of(dialogContext).showSnackBar(
-        const SnackBar(content: Text('Loaded data from Google Sleep API')),
+        SnackBar(
+          content: Text(
+            '오류가 발생했습니다: ${e.toString()}\n'
+            '기본 추정값을 사용합니다.'
+          ),
+          duration: const Duration(seconds: 4),
+        ),
       );
-    } else {
       final defaultData = SleepApiService.instance.getDefaultEstimate();
       setState(() {
         onDataLoaded(defaultData['sleepTime']!, defaultData['wakeTime']!);
       });
-      ScaffoldMessenger.of(dialogContext).showSnackBar(
-        const SnackBar(
-            content: Text('API 데이터를 찾을 수 없습니다. 기본값을 사용합니다')),
-      );
     }
   }
 }

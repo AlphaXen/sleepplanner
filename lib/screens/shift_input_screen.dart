@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/sleep_provider.dart';
+import '../providers/schedule_provider.dart';
+import '../providers/settings_provider.dart';
 import '../models/shift_info.dart';
 import 'daily_plan_screen.dart';
 
@@ -38,6 +40,8 @@ class _ShiftInputScreenState extends State<ShiftInputScreen> {
 
   void _submit() {
     final provider = Provider.of<SleepProvider>(context, listen: false);
+    final scheduleProvider = Provider.of<ScheduleProvider>(context, listen: false);
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
 
     ShiftInfo shift;
     if (_type == ShiftType.off) {
@@ -58,7 +62,11 @@ class _ShiftInputScreenState extends State<ShiftInputScreen> {
       }
     }
 
-    provider.computeTodayPlanForShift(shift);
+    provider.computeTodayPlanForShift(
+      shift: shift,
+      weeklySchedule: scheduleProvider.currentSchedule,
+      dayStartHour: settingsProvider.dayStartHour,
+    );
 
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const DailyPlanScreen()),
