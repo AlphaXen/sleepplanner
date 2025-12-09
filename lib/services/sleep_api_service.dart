@@ -107,12 +107,12 @@ class SleepApiService {
     
     if (now.hour >= 0 && now.hour < 12) {
       // 오전이면 어제 밤 ~ 오늘 아침
-      estimatedSleep = DateTime(now.year, now.month, now.day - 1, 23, 0);
-      estimatedWake = DateTime(now.year, now.month, now.day, 7, 30);
+      estimatedSleep = DateTime(now.year, now.month, now.day - 1, 2, 30);
+      estimatedWake = DateTime(now.year, now.month, now.day, 7, 0);
     } else {
       // 오후/저녁이면 오늘 밤 ~ 내일 아침
-      estimatedSleep = DateTime(now.year, now.month, now.day, 23, 0);
-      estimatedWake = DateTime(now.year, now.month, now.day + 1, 7, 30);
+      estimatedSleep = DateTime(now.year, now.month, now.day, 2, 30);
+      estimatedWake = DateTime(now.year, now.month, now.day + 1, 7, 0);
     }
 
     return {

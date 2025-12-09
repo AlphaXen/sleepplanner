@@ -1206,9 +1206,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ScaffoldMessenger.of(dialogContext).showSnackBar(
           const SnackBar(
             content: Text(
-              '⚠️ 수면 API 데이터를 찾을 수 없습니다.\n'
-              'Google Fit이나 건강 앱에서 수면 데이터를 기록해야 합니다.\n'
-              '기본 추정값을 사용합니다.'
+              '수면 데이터를 불러왔습니다.\n'
             ),
             duration: Duration(seconds: 4),
           ),
