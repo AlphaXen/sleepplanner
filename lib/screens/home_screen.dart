@@ -13,7 +13,6 @@ import 'daily_plan_screen.dart';
 import '../models/sleep_entry.dart';
 import '../widgets/daily_tip_card.dart';
 import '../services/sleep_api_service.dart';
-import 'stats_screen.dart';
 import 'auto_reply_settings_screen.dart';
 import 'alarm_screen.dart';
 import 'sleep_music_screen.dart';
@@ -42,14 +41,21 @@ class _HomeScreenState extends State<HomeScreen> {
       
       sleepProvider.setUser(authProvider.user);
       
-      // Firebase에서 데이터 로드 후 스케줄 자동 생성
+      // Firebase에서 데이터 로드
       final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
       if (authProvider.isAuthenticated) {
         await sleepProvider.syncWithFirestore();
-        if (sleepProvider.entries.isNotEmpty) {
+        
+        // ScheduleProvider의 스케줄 로드가 완료될 때까지 대기
+        await scheduleProvider.waitForLoad();
+        
+        // 스케줄이 없을 때만 수면 기록으로부터 자동 생성
+        // (기존 스케줄이 있으면 사용자가 설정한 것이므로 덮어쓰지 않음)
+        if (sleepProvider.entries.isNotEmpty && scheduleProvider.currentSchedule == null) {
           await scheduleProvider.generateScheduleFromSleepEntries(
             sleepProvider.entries,
             dayStartHour: settingsProvider.dayStartHour,
+            force: false, // 기존 스케줄이 있으면 덮어쓰지 않음
           );
         }
       }
@@ -212,15 +218,6 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.show_chart),
-            tooltip: '통계/그래프',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const StatsScreen()),
               );
             },
           ),
@@ -409,8 +406,8 @@ class _HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(builder: (_) => const IntegratedSleepManagementScreen()),
           ),
           child: _buildFeatureCardWidget(
-            'AI 분석 & 야간 근무',
-            Icons.psychology,
+            '야간 근무',
+            Icons.work_history,
             const [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
           ),
         ),
@@ -457,18 +454,13 @@ class _HomeScreenState extends State<HomeScreen> {
   /* ===================== Adaptive Recommendation Card ====================== */
 
   Widget _buildAdaptiveRecommendationCard(BuildContext context) {
-    return Consumer<SleepProvider>(
-      builder: (context, sleepProvider, _) {
+    return Consumer3<SleepProvider, ScheduleProvider, SettingsProvider>(
+      builder: (context, sleepProvider, scheduleProvider, settingsProvider, _) {
         final plan = sleepProvider.lastDailyPlan;
-        final scheduleProvider = Provider.of<ScheduleProvider>(context);
-        final settingsProvider = Provider.of<SettingsProvider>(context);
         
-        // 계획이 없으면 자동으로 생성 시도
-        if (plan == null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _updateTodayPlan(sleepProvider, scheduleProvider, settingsProvider);
-          });
-        }
+        // 계획이 없고, Consumer가 처음 호출되었을 때만 자동으로 생성 시도 (무한 루프 방지)
+        // Consumer 내부에서 직접 _updateTodayPlan을 호출하지 않고, 
+        // initState에서만 호출하도록 변경하여 무한 루프 방지
         
         if (plan == null) {
           return Card(
@@ -746,11 +738,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 
                 await provider.deleteEntry(entry);
                 
-                // 주간 스케줄 업데이트
+                // 주간 스케줄 업데이트 (스케줄이 없을 때만 자동 생성)
                 if (provider.entries.isNotEmpty) {
                   await scheduleProvider.generateScheduleFromSleepEntries(
                     provider.entries,
                     dayStartHour: settingsProvider.dayStartHour,
+                    force: false, // 기존 스케줄이 있으면 덮어쓰지 않음
                   );
                 }
                 
@@ -892,27 +885,35 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     );
                     
-                    // 주간 스케줄 자동 생성 (수면 기록 기반)
+                    // 주간 스케줄 자동 생성 (수면 기록 기반, 스케줄이 없을 때만)
                     final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+                    final hadSchedule = scheduleProvider.currentSchedule != null;
                     await scheduleProvider.generateScheduleFromSleepEntries(
                       provider.entries,
                       dayStartHour: settingsProvider.dayStartHour,
+                      force: false, // 기존 스케줄이 있으면 덮어쓰지 않음
                     );
                     
                     if (context.mounted) {
                       final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                      final scheduleUpdated = !hadSchedule && scheduleProvider.currentSchedule != null;
+                      
                       if (authProvider.isAuthenticated) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('수면 기록이 수정되었습니다 ✏️\n주간 스케줄이 업데이트되었습니다 📅'),
-                            duration: Duration(seconds: 3),
+                          SnackBar(
+                            content: Text(scheduleUpdated 
+                              ? '수면 기록이 수정되었습니다 ✏️\n주간 스케줄이 자동 생성되었습니다 📅'
+                              : '수면 기록이 수정되었습니다 ✏️'),
+                            duration: const Duration(seconds: 3),
                           ),
                         );
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('수면 기록이 수정되었습니다 ✏️\n주간 스케줄이 업데이트되었습니다 📅'),
-                            duration: Duration(seconds: 2),
+                          SnackBar(
+                            content: Text(scheduleUpdated 
+                              ? '수면 기록이 수정되었습니다 ✏️\n주간 스케줄이 자동 생성되었습니다 📅'
+                              : '수면 기록이 수정되었습니다 ✏️'),
+                            duration: const Duration(seconds: 2),
                           ),
                         );
                       }
@@ -1022,27 +1023,35 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     );
                     
-                    // 주간 스케줄 자동 생성 (수면 기록 기반)
+                    // 주간 스케줄 자동 생성 (수면 기록 기반, 스케줄이 없을 때만)
                     final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+                    final hadSchedule = scheduleProvider.currentSchedule != null;
                     await scheduleProvider.generateScheduleFromSleepEntries(
                       provider.entries,
                       dayStartHour: settingsProvider.dayStartHour,
+                      force: false, // 기존 스케줄이 있으면 덮어쓰지 않음
                     );
                     
                     if (mounted) {
                       final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                      final scheduleUpdated = !hadSchedule && scheduleProvider.currentSchedule != null;
+                      
                       if (authProvider.isAuthenticated) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('수면 기록이 클라우드에 저장되었습니다 ☁️\n주간 스케줄이 자동 생성되었습니다 📅'),
-                            duration: Duration(seconds: 3),
+                          SnackBar(
+                            content: Text(scheduleUpdated 
+                              ? '수면 기록이 클라우드에 저장되었습니다 ☁️\n주간 스케줄이 자동 생성되었습니다 📅'
+                              : '수면 기록이 클라우드에 저장되었습니다 ☁️'),
+                            duration: const Duration(seconds: 3),
                           ),
                         );
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('수면 기록이 저장되었습니다\n주간 스케줄이 자동 생성되었습니다 📅'),
-                            duration: Duration(seconds: 2),
+                          SnackBar(
+                            content: Text(scheduleUpdated 
+                              ? '수면 기록이 저장되었습니다\n주간 스케줄이 자동 생성되었습니다 📅'
+                              : '수면 기록이 저장되었습니다'),
+                            duration: const Duration(seconds: 2),
                           ),
                         );
                       }

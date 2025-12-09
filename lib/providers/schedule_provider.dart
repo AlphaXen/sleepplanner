@@ -8,26 +8,57 @@ import '../utils/date_utils.dart';
 
 class ScheduleProvider extends ChangeNotifier {
   WeeklySchedule? _currentSchedule;
+  bool _isLoading = false;
+  bool _isLoaded = false;
 
   WeeklySchedule? get currentSchedule => _currentSchedule;
+  bool get isLoaded => _isLoaded;
 
   ScheduleProvider() {
     _loadSchedule();
   }
+  
+  /// 스케줄 로드가 완료될 때까지 대기
+  Future<void> waitForLoad() async {
+    if (_isLoaded) return;
+    
+    // 최대 2초까지 대기
+    int attempts = 0;
+    while (!_isLoaded && attempts < 20) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      attempts++;
+    }
+  }
 
   Future<void> _loadSchedule() async {
+    if (_isLoading) return;
+    _isLoading = true;
+    
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString('weekly_schedule');
       
-      if (raw != null) {
+      debugPrint('📅 주간 스케줄 로드 시도:');
+      debugPrint('   저장된 데이터: ${raw != null ? "${raw.length} bytes" : "없음"}');
+      
+      if (raw != null && raw.isNotEmpty) {
         final json = jsonDecode(raw) as Map<String, dynamic>;
         _currentSchedule = WeeklySchedule.fromJson(json);
         notifyListeners();
-        debugPrint('Schedule loaded successfully');
+        debugPrint('   ✅ 주간 스케줄 로드 완료');
+        debugPrint('   weekStart: ${_currentSchedule?.weekStart.toString()}');
+        debugPrint('   shifts 개수: ${_currentSchedule?.shifts.length ?? 0}');
+        debugPrint('   패턴: ${_currentSchedule?.detectPattern() ?? "없음"}');
+      } else {
+        debugPrint('   ℹ️ 저장된 주간 스케줄 없음');
       }
+      
+      _isLoaded = true;
     } catch (e) {
-      debugPrint('Error loading schedule: $e');
+      debugPrint('❌ 주간 스케줄 로드 오류: $e');
+      _isLoaded = true; // 에러가 나도 로드 시도는 완료로 표시
+    } finally {
+      _isLoading = false;
     }
   }
 
@@ -35,13 +66,64 @@ class ScheduleProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final json = schedule.toJson();
-      await prefs.setString('weekly_schedule', jsonEncode(json));
+      final jsonString = jsonEncode(json);
+      
+      debugPrint('📅 주간 스케줄 저장 시작:');
+      debugPrint('   weekStart: ${schedule.weekStart.toString()}');
+      debugPrint('   shifts 개수: ${schedule.shifts.length}');
+      debugPrint('   JSON 길이: ${jsonString.length} bytes');
+      
+      final saved = await prefs.setString('weekly_schedule', jsonString);
+      
+      if (!saved) {
+        debugPrint('   ⚠️ SharedPreferences 저장 실패');
+        throw Exception('주간 스케줄 저장 실패: SharedPreferences write failed');
+      }
+      
+      // 저장 확인 - 저장 직후 다시 읽어서 확인
+      final verifyString = prefs.getString('weekly_schedule');
+      if (verifyString == null || verifyString.isEmpty) {
+        debugPrint('   ⚠️ 저장 확인 실패: 데이터가 없음');
+        throw Exception('주간 스케줄 저장 확인 실패: 저장된 데이터가 없음');
+      }
+      
+      if (verifyString != jsonString) {
+        debugPrint('   ⚠️ 저장 확인 실패: 데이터 불일치');
+        debugPrint('   원본 길이: ${jsonString.length} bytes');
+        debugPrint('   저장된 길이: ${verifyString.length} bytes');
+        // JSON 파싱해서 내용 비교
+        try {
+          final savedJson = jsonDecode(verifyString) as Map<String, dynamic>;
+          final originalJson = jsonDecode(jsonString) as Map<String, dynamic>;
+          if (savedJson['weekStart'] != originalJson['weekStart'] ||
+              (savedJson['shifts'] as Map).length != (originalJson['shifts'] as Map).length) {
+            throw Exception('주간 스케줄 저장 확인 실패: 저장된 데이터 내용이 일치하지 않음');
+          }
+        } catch (e) {
+          debugPrint('   ⚠️ 저장 확인 중 오류: $e');
+          // 파싱 에러가 나도 저장은 성공했을 수 있으므로 계속 진행
+        }
+      }
       
       _currentSchedule = schedule;
       notifyListeners();
-      debugPrint('Schedule saved successfully');
+      debugPrint('   ✅ 주간 스케줄 저장 완료');
+      debugPrint('   패턴: ${schedule.detectPattern()}');
+      
+      // 최종 확인: 다시 로드해서 검증
+      try {
+        final reloadedString = prefs.getString('weekly_schedule');
+        if (reloadedString != null && reloadedString.isNotEmpty) {
+          final reloadedJson = jsonDecode(reloadedString) as Map<String, dynamic>;
+          final reloadedSchedule = WeeklySchedule.fromJson(reloadedJson);
+          debugPrint('   ✅ 최종 검증: 저장된 스케줄을 다시 로드하여 확인');
+          debugPrint('   재로드된 패턴: ${reloadedSchedule.detectPattern()}');
+        }
+      } catch (e) {
+        debugPrint('   ⚠️ 최종 검증 중 오류 (무시): $e');
+      }
     } catch (e) {
-      debugPrint('Error saving schedule: $e');
+      debugPrint('❌ 주간 스케줄 저장 오류: $e');
       rethrow;
     }
   }
@@ -62,9 +144,17 @@ class ScheduleProvider extends ChangeNotifier {
   bool get hasSchedule => _currentSchedule != null;
 
   /// 수면 기록 데이터로부터 주간 스케줄 자동 생성
-  Future<void> generateScheduleFromSleepEntries(List<SleepEntry> entries, {int dayStartHour = 0}) async {
+  /// 기존 스케줄이 있으면 덮어쓰지 않음 (force=true일 때만 덮어쓰기)
+  Future<void> generateScheduleFromSleepEntries(List<SleepEntry> entries, {int dayStartHour = 0, bool force = false}) async {
     if (entries.isEmpty) {
       debugPrint('No sleep entries to generate schedule');
+      return;
+    }
+    
+    // 기존 스케줄이 있고 force=false이면 덮어쓰지 않음
+    if (!force && _currentSchedule != null) {
+      debugPrint('⚠️ 기존 스케줄이 존재하여 자동 생성하지 않습니다. (force=true로 덮어쓰기 가능)');
+      debugPrint('   기존 스케줄 패턴: ${_currentSchedule!.detectPattern()}');
       return;
     }
 
@@ -147,8 +237,8 @@ class ScheduleProvider extends ChangeNotifier {
         }
       } else {
         // 기록이 없는 날은 휴무로 처리 (또는 이전 패턴 기반)
-        // 수면 중간 시간을 해당 날 정오로 설정
-        final preferredMid = DateTime(targetDate.year, targetDate.month, targetDate.day, 12, 0);
+        // 수면 중간 시간을 새벽 3시로 설정 (정상적인 수면 시간대)
+        final preferredMid = DateTime(targetDate.year, targetDate.month, targetDate.day, 3, 0);
         shifts[dayIndex] = ShiftInfo.off(preferredMid: preferredMid);
       }
     }

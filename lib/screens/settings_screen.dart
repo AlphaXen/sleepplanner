@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/sleep_provider.dart';
-import '../providers/schedule_provider.dart';
+import 'onboarding_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -145,10 +145,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         await settingsProvider.setDayStartHour(value.toInt());
                         // 날짜 계산이 변경되므로 관련 Provider들 갱신
                         if (mounted) {
-                          final sleepProvider = Provider.of<SleepProvider>(context, listen: false);
-                          final scheduleProvider = Provider.of<ScheduleProvider>(context, listen: false);
-                          sleepProvider.notifyListeners();
-                          scheduleProvider.notifyListeners();
+                          // Provider의 setter가 이미 notifyListeners()를 호출하므로 추가 호출 불필요
+                          // 필요시 Provider의 해당 메서드에서 처리
                         }
                       },
                     ),
@@ -201,6 +199,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 16),
+
+            // 튜토리얼 다시보기
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.school, color: Colors.purple),
+                title: const Text(
+                  '튜토리얼 다시보기',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                subtitle: const Text('앱 사용법을 다시 확인하세요'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => OnboardingScreen(
+                        onCompleted: () {
+                          // 튜토리얼 완료 후 설정 화면으로 돌아감
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -215,10 +242,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       onSelected: (selected) async {
         if (selected) {
           await provider.setDayStartHour(hour);
-          if (mounted) {
-            Provider.of<SleepProvider>(context, listen: false).notifyListeners();
-            Provider.of<ScheduleProvider>(context, listen: false).notifyListeners();
-          }
+          // Provider의 setter가 이미 notifyListeners()를 호출하므로 추가 호출 불필요
         }
       },
     );

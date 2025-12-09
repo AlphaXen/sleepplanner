@@ -259,13 +259,36 @@ class SleepProvider extends ChangeNotifier {
     WeeklySchedule? weeklySchedule,
     int dayStartHour = 0,
   }) {
-    lastDailyPlan = _adaptiveService.computeDailyPlan(
+    final newPlan = _adaptiveService.computeDailyPlan(
       params: adaptiveParams,
       shift: shift,
       weeklySchedule: weeklySchedule,
       dayStartHour: dayStartHour,
     );
-    notifyListeners();
+    
+    // newPlan이 null이면 이전 계획 유지 (변경 없음)
+    if (newPlan == null) {
+      return;
+    }
+    
+    // 실제로 계획이 변경되었을 때만 notifyListeners 호출 (무한 루프 방지)
+    final oldPlan = lastDailyPlan;
+    bool hasChanged;
+    if (oldPlan == null) {
+      hasChanged = true;
+    } else {
+      hasChanged = oldPlan.mainSleepStart != newPlan.mainSleepStart ||
+          oldPlan.mainSleepEnd != newPlan.mainSleepEnd ||
+          oldPlan.caffeineCutoff != newPlan.caffeineCutoff;
+    }
+    
+    if (hasChanged) {
+      lastDailyPlan = newPlan;
+      notifyListeners();
+    } else {
+      // 내용이 같더라도 참조 업데이트
+      lastDailyPlan = newPlan;
+    }
   }
 
   /// 주 단위 적응 알고리즘 helper

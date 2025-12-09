@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import '../models/weekly_schedule.dart';
 import '../models/shift_info.dart';
 import '../providers/schedule_provider.dart';
+import '../providers/sleep_provider.dart';
+import '../providers/settings_provider.dart';
+import '../utils/date_utils.dart';
 
 class WeeklyScheduleScreen extends StatefulWidget {
   const WeeklyScheduleScreen({super.key});
@@ -33,30 +36,36 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
     });
   }
 
-  void _loadExistingSchedule() {
+  Future<void> _loadExistingSchedule() async {
     final scheduleProvider = Provider.of<ScheduleProvider>(context, listen: false);
+    
+    // 스케줄 로드가 완료될 때까지 대기
+    await scheduleProvider.waitForLoad();
+    
     final existingSchedule = scheduleProvider.currentSchedule;
     
     if (existingSchedule != null) {
-      setState(() {
-        _weekStart = existingSchedule.weekStart;
-        _shifts.clear();
-        _shifts.addAll(existingSchedule.shifts);
-        
-        // 빈 슬롯 채우기
-        for (int i = 0; i < 7; i++) {
-          if (!_shifts.containsKey(i)) {
-            _shifts[i] = null;
+      if (mounted) {
+        setState(() {
+          _weekStart = existingSchedule.weekStart;
+          _shifts.clear();
+          _shifts.addAll(existingSchedule.shifts);
+          
+          // 빈 슬롯 채우기
+          for (int i = 0; i < 7; i++) {
+            if (!_shifts.containsKey(i)) {
+              _shifts[i] = null;
+            }
           }
-        }
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('저장된 스케줄을 불러왔습니다'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('저장된 스케줄을 불러왔습니다'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
@@ -95,12 +104,36 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
     try {
       // Provider에 저장
       final scheduleProvider = Provider.of<ScheduleProvider>(context, listen: false);
+      final sleepProvider = Provider.of<SleepProvider>(context, listen: false);
+      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+      
       await scheduleProvider.saveSchedule(schedule);
+      
+      // 스케줄 저장 후 적응형 수면 계획 자동 재계산
+      final now = DateTime.now();
+      final today = getTodayKey(settingsProvider.dayStartHour);
+      final todayShift = schedule.getShiftForDate(today);
+      
+      if (todayShift != null) {
+        sleepProvider.computeTodayPlanForShift(
+          shift: todayShift,
+          weeklySchedule: schedule,
+          dayStartHour: settingsProvider.dayStartHour,
+        );
+      } else {
+        // 오늘 근무 정보가 없으면 기본 휴무로 처리
+        final defaultOff = ShiftInfo.off(preferredMid: DateTime(now.year, now.month, now.day, 3, 0));
+        sleepProvider.computeTodayPlanForShift(
+          shift: defaultOff,
+          weeklySchedule: schedule,
+          dayStartHour: settingsProvider.dayStartHour,
+        );
+      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('주간 스케줄 저장 완료\n패턴: ${schedule.detectPattern()}'),
+            content: Text('주간 스케줄 저장 완료\n패턴: ${schedule.detectPattern()}\n적응형 수면 계획이 자동으로 업데이트되었습니다'),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -329,9 +362,46 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
   }
 
   void _showShiftDialog(int dayIndex) {
-    ShiftType selectedType = _shifts[dayIndex]?.type ?? ShiftType.day;
-    DateTime startTime = DateTime.now();
-    DateTime endTime = DateTime.now().add(const Duration(hours: 8));
+    final dayDate = _weekStart.add(Duration(days: dayIndex));
+    final existingShift = _shifts[dayIndex];
+    
+    ShiftType selectedType = existingShift?.type ?? ShiftType.day;
+    
+    // 기존 스케줄이 있으면 그것을 기반으로 초기값 설정, 없으면 기본값 사용
+    DateTime startTime;
+    DateTime endTime;
+    
+    if (existingShift != null && existingShift.shiftStart != null && existingShift.shiftEnd != null) {
+      // 기존 스케줄의 시간 정보 사용 (날짜는 dayDate로 교체)
+      startTime = DateTime(
+        dayDate.year,
+        dayDate.month,
+        dayDate.day,
+        existingShift.shiftStart!.hour,
+        existingShift.shiftStart!.minute,
+      );
+      endTime = DateTime(
+        dayDate.year,
+        dayDate.month,
+        dayDate.day,
+        existingShift.shiftEnd!.hour,
+        existingShift.shiftEnd!.minute,
+      );
+      
+      // 야간 근무의 경우 종료 시간이 다음날일 수 있음
+      if (existingShift.type == ShiftType.night && endTime.isBefore(startTime)) {
+        endTime = endTime.add(const Duration(days: 1));
+      }
+    } else {
+      // 기본값: 주간 근무는 9-17시, 야간 근무는 22-6시
+      if (selectedType == ShiftType.night) {
+        startTime = DateTime(dayDate.year, dayDate.month, dayDate.day, 22, 0);
+        endTime = DateTime(dayDate.year, dayDate.month, dayDate.day, 6, 0).add(const Duration(days: 1));
+      } else {
+        startTime = DateTime(dayDate.year, dayDate.month, dayDate.day, 9, 0);
+        endTime = DateTime(dayDate.year, dayDate.month, dayDate.day, 17, 0);
+      }
+    }
 
     showDialog(
       context: context,
@@ -344,7 +414,7 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
               children: [
                 // 근무 유형 선택
                 DropdownButtonFormField<ShiftType>(
-                  initialValue: selectedType,
+                  value: selectedType,
                   decoration: const InputDecoration(
                     labelText: '근무 유형',
                     border: OutlineInputBorder(),
@@ -365,7 +435,17 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
                   ],
                   onChanged: (v) {
                     if (v != null) {
-                      setState(() => selectedType = v);
+                      setState(() {
+                        selectedType = v;
+                        // 근무 유형이 변경되면 기본 시간으로 재설정
+                        if (v == ShiftType.night) {
+                          startTime = DateTime(dayDate.year, dayDate.month, dayDate.day, 22, 0);
+                          endTime = DateTime(dayDate.year, dayDate.month, dayDate.day, 6, 0).add(const Duration(days: 1));
+                        } else if (v == ShiftType.day) {
+                          startTime = DateTime(dayDate.year, dayDate.month, dayDate.day, 9, 0);
+                          endTime = DateTime(dayDate.year, dayDate.month, dayDate.day, 17, 0);
+                        }
+                      });
                     }
                   },
                 ),
@@ -386,12 +466,22 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
                       if (time != null) {
                         setState(() {
                           startTime = DateTime(
-                            startTime.year,
-                            startTime.month,
-                            startTime.day,
+                            dayDate.year,
+                            dayDate.month,
+                            dayDate.day,
                             time.hour,
                             time.minute,
                           );
+                          // 야간 근무의 경우 종료 시간이 다음날일 수 있음
+                          if (selectedType == ShiftType.night && endTime.isBefore(startTime)) {
+                            endTime = DateTime(
+                              dayDate.year,
+                              dayDate.month,
+                              dayDate.day,
+                              endTime.hour,
+                              endTime.minute,
+                            ).add(const Duration(days: 1));
+                          }
                         });
                       }
                     },
@@ -410,13 +500,24 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
                       );
                       if (time != null) {
                         setState(() {
-                          endTime = DateTime(
-                            endTime.year,
-                            endTime.month,
-                            endTime.day,
-                            time.hour,
-                            time.minute,
-                          );
+                          // 야간 근무의 경우 종료 시간이 시작 시간보다 작으면 다음날로 해석
+                          if (selectedType == ShiftType.night && time.hour < startTime.hour) {
+                            endTime = DateTime(
+                              dayDate.year,
+                              dayDate.month,
+                              dayDate.day,
+                              time.hour,
+                              time.minute,
+                            ).add(const Duration(days: 1));
+                          } else {
+                            endTime = DateTime(
+                              dayDate.year,
+                              dayDate.month,
+                              dayDate.day,
+                              time.hour,
+                              time.minute,
+                            );
+                          }
                         });
                       }
                     },
@@ -434,8 +535,9 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
               onPressed: () {
                 ShiftInfo shift;
                 if (selectedType == ShiftType.off) {
+                  // 휴무일은 해당 날짜의 새벽 3시를 preferredMid로 설정
                   shift = ShiftInfo.off(
-                    preferredMid: DateTime.now(),
+                    preferredMid: DateTime(dayDate.year, dayDate.month, dayDate.day, 3, 0),
                   );
                 } else if (selectedType == ShiftType.day) {
                   shift = ShiftInfo.day(

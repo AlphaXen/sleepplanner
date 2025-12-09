@@ -64,8 +64,27 @@ class SleepApiService {
 
       // 가장 최근 데이터 가져오기
       final latestData = nativeList.last;
-      final sleepTime = DateTime.parse(latestData['sleepTime']);
-      final wakeTime = DateTime.parse(latestData['wakeTime']);
+      
+      // ISO8601 형식 문자열 파싱 (타임존 정보 포함)
+      final sleepTimeStr = latestData['sleepTime'] as String;
+      final wakeTimeStr = latestData['wakeTime'] as String;
+      
+      debugPrint('📅 원본 문자열 - sleepTime: $sleepTimeStr, wakeTime: $wakeTimeStr');
+      
+      final sleepTime = DateTime.parse(sleepTimeStr);
+      final wakeTime = DateTime.parse(wakeTimeStr);
+      
+      debugPrint('📅 파싱된 시간 - sleepTime: ${sleepTime.toString()}, wakeTime: ${wakeTime.toString()}');
+      debugPrint('📅 수면 시간: ${sleepTime.year}-${sleepTime.month}-${sleepTime.day} ${sleepTime.hour}:${sleepTime.minute}');
+      debugPrint('📅 기상 시간: ${wakeTime.year}-${wakeTime.month}-${wakeTime.day} ${wakeTime.hour}:${wakeTime.minute}');
+      
+      // 비정상적인 수면 시간 검증 (24시간 이상이거나 음수인 경우)
+      final duration = wakeTime.difference(sleepTime);
+      if (duration.inHours > 24 || duration.isNegative) {
+        debugPrint('⚠️ 비정상적인 수면 시간 감지: ${duration.inHours}시간 ${duration.inMinutes.remainder(60)}분');
+        debugPrint('   원본 데이터가 잘못되었을 수 있습니다.');
+        return null;
+      }
 
       return {
         'sleepTime': sleepTime,
@@ -73,6 +92,7 @@ class SleepApiService {
       };
     } catch (e) {
       debugPrint('Sleep API 데이터 파싱 오류: $e');
+      debugPrint('   스택 트레이스: ${StackTrace.current}');
       return null;
     }
   }

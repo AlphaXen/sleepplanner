@@ -156,7 +156,7 @@ class ShiftWorkerService {
     if (shift.type == ShiftType.night) {
       strategy['duringWork'] = {
         'intensity': 'high',
-        'description': '근무 중 밝은 빛 노출 (각성 유지)',
+        'description': '☀️ 근무 중 밝은 빛 노출 (각성 유지)',
         'recommendation': '가능한 밝은 조명 아래에서 근무하세요',
       };
 
@@ -164,28 +164,47 @@ class ShiftWorkerService {
         final goHomeTime = shift.shiftEnd!;
         strategy['afterWork'] = {
           'intensity': 'block',
-          'description': '퇴근 후 빛 차단 (멜라토닌 분비 유지)',
-          'recommendation': '선글라스 착용, 커튼 암막 처리',
+          'description': '🌙 퇴근 후 빛 차단 (멜라토닌 분비 유지)',
+          'recommendation': '퇴근 시 선글라스 착용, 집에 도착하면 암막 커튼 사용',
           'criticalTime': goHomeTime.toIso8601String(),
         };
       }
 
       strategy['beforeSleep'] = {
         'intensity': 'minimal',
-        'description': '수면 전 최소 빛 노출',
-        'recommendation': '어두운 환경에서 휴식',
+        'description': '🌑 수면 전 최소 빛 노출',
+        'recommendation': '어두운 환경에서 휴식, 스마트폰/태블릿 사용 최소화',
       };
     } else if (shift.type == ShiftType.day) {
       strategy['morning'] = {
         'intensity': 'high',
-        'description': '아침 햇빛 노출 (일주기 리듬 강화)',
-        'recommendation': '기상 후 30분 이내 밝은 빛 노출',
+        'description': '☀️ 아침 햇빛 노출 (일주기 리듬 강화)',
+        'recommendation': '기상 후 30분 이내 밝은 빛 노출로 수면-각성 리듬 조절',
       };
 
       strategy['evening'] = {
         'intensity': 'dim',
-        'description': '저녁 빛 줄이기',
-        'recommendation': '취침 2시간 전부터 조명 어둡게',
+        'description': '🌙 저녁 빛 줄이기',
+        'recommendation': '취침 2시간 전부터 조명을 어둡게 하고 블루라이트 차단',
+      };
+    } else if (shift.type == ShiftType.off) {
+      // 휴무일 빛 노출 전략
+      strategy['morning'] = {
+        'intensity': 'high',
+        'description': '☀️ 아침 햇빛 노출 (일주기 리듬 유지)',
+        'recommendation': '기상 후 30분 이내 밝은 빛 노출로 자연스러운 리듬 유지',
+      };
+
+      strategy['afternoon'] = {
+        'intensity': 'moderate',
+        'description': '☀️ 오후 적당한 빛 노출',
+        'recommendation': '야외 활동이나 창가 근처에서 자연광 노출',
+      };
+
+      strategy['evening'] = {
+        'intensity': 'dim',
+        'description': '🌙 저녁 빛 줄이기',
+        'recommendation': '취침 2시간 전부터 조명을 어둡게 하고 전자기기 사용 줄이기',
       };
     }
 

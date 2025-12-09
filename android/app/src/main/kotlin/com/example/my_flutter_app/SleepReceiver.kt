@@ -48,8 +48,23 @@ class SleepReceiver : BroadcastReceiver() {
     }
 
     private fun toIso8601(millis: Long): String {
+        // Google Sleep API의 타임스탬프는 UTC 밀리초
+        // 로컬 시간대로 변환하고 타임존 정보 포함
+        val date = java.util.Date(millis)
         val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", java.util.Locale.US)
-        return sdf.format(java.util.Date(millis))
+        sdf.timeZone = java.util.TimeZone.getDefault() // 로컬 타임존 사용
+        
+        // 타임존 오프셋 계산 (예: +09:00, -05:00)
+        val timeZone = java.util.TimeZone.getDefault()
+        val offset = timeZone.getOffset(millis)
+        val offsetHours = Math.abs(offset / (1000 * 60 * 60))
+        val offsetMinutes = Math.abs((offset / (1000 * 60)) % 60)
+        val offsetSign = if (offset >= 0) "+" else "-"
+        val timezoneOffset = String.format(java.util.Locale.US, "%s%02d:%02d", offsetSign, offsetHours, offsetMinutes)
+        
+        Log.d("SleepReceiver", "타임스탬프 변환: UTC $millis -> 로컬 ${sdf.format(date)}$timezoneOffset")
+        
+        return sdf.format(date) + timezoneOffset
     }
 }
 

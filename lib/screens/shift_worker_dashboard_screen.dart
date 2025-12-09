@@ -6,6 +6,7 @@ import '../providers/settings_provider.dart';
 import '../services/shift_worker_service.dart';
 import '../models/weekly_schedule.dart';
 import '../models/shift_info.dart';
+import '../utils/date_utils.dart';
 import 'weekly_schedule_screen.dart';
 import 'daily_plan_screen.dart';
 
@@ -47,51 +48,50 @@ class _ShiftWorkerDashboardScreenState
 
   @override
   Widget build(BuildContext context) {
-    final sleepProvider = Provider.of<SleepProvider>(context);
-    final scheduleProvider = Provider.of<ScheduleProvider>(context);
-    final settingsProvider = Provider.of<SettingsProvider>(context);
-    final currentSchedule = scheduleProvider.currentSchedule;
+    return Consumer3<SleepProvider, ScheduleProvider, SettingsProvider>(
+      builder: (context, sleepProvider, scheduleProvider, settingsProvider, _) {
+        final currentSchedule = scheduleProvider.currentSchedule;
 
-    // 수면 부채 계산 (사용자 설정 목표 시간 사용)
-    final sleepDebts = _service.calculateSleepDebt(
-      entries: sleepProvider.entries,
-      targetHours: settingsProvider.dailyTargetHours.toDouble(),
-      dayStartHour: settingsProvider.dayStartHour,
-      days: 7,
-    );
-    final cumulativeDebt = _service.calculateCumulativeDebt(sleepDebts);
-    
-    debugPrint('📊 수면부채 계산:');
-    debugPrint('   수면 기록 수: ${sleepProvider.entries.length}개');
-    debugPrint('   목표 시간: ${settingsProvider.dailyTargetHours}시간');
-    debugPrint('   계산된 부채 일수: ${sleepDebts.length}일');
-    debugPrint('   누적 부채: ${cumulativeDebt.toStringAsFixed(1)}시간');
-    for (final debt in sleepDebts) {
-      debugPrint('   ${debt.date.toString().substring(0, 10)}: 실제 ${debt.actualHours.toStringAsFixed(1)}h, 목표 ${debt.targetHours.toStringAsFixed(1)}h, 부채 ${debt.debtHours.toStringAsFixed(1)}h');
-    }
+        // 수면 부채 계산 (사용자 설정 목표 시간 사용)
+        final sleepDebts = _service.calculateSleepDebt(
+          entries: sleepProvider.entries,
+          targetHours: settingsProvider.dailyTargetHours.toDouble(),
+          dayStartHour: settingsProvider.dayStartHour,
+          days: 7,
+        );
+        final cumulativeDebt = _service.calculateCumulativeDebt(sleepDebts);
+        
+        debugPrint('📊 수면부채 계산:');
+        debugPrint('   수면 기록 수: ${sleepProvider.entries.length}개');
+        debugPrint('   목표 시간: ${settingsProvider.dailyTargetHours}시간');
+        debugPrint('   계산된 부채 일수: ${sleepDebts.length}일');
+        debugPrint('   누적 부채: ${cumulativeDebt.toStringAsFixed(1)}시간');
+        for (final debt in sleepDebts) {
+          debugPrint('   ${debt.date.toString().substring(0, 10)}: 실제 ${debt.actualHours.toStringAsFixed(1)}h, 목표 ${debt.targetHours.toStringAsFixed(1)}h, 부채 ${debt.debtHours.toStringAsFixed(1)}h');
+        }
 
-    // 평균 수면 시간 계산
-    final avgSleepHours = sleepDebts.isEmpty
-        ? 0.0
-        : sleepDebts.map((d) => d.actualHours).reduce((a, b) => a + b) /
-            sleepDebts.length;
+        // 평균 수면 시간 계산
+        final avgSleepHours = sleepDebts.isEmpty
+            ? 0.0
+            : sleepDebts.map((d) => d.actualHours).reduce((a, b) => a + b) /
+                sleepDebts.length;
 
-    // 수면 일관성 계산
-    final sleepConsistency = _service.calculateSleepConsistency(sleepDebts);
+        // 수면 일관성 계산
+        final sleepConsistency = _service.calculateSleepConsistency(sleepDebts);
 
-    // 연속 야간 근무 계산
-    final consecutiveNightShifts =
-        _service.calculateConsecutiveNightShifts(currentSchedule);
+        // 연속 야간 근무 계산
+        final consecutiveNightShifts =
+            _service.calculateConsecutiveNightShifts(currentSchedule);
 
-    // 건강 점수 계산
-    final healthScore = _service.calculateShiftWorkerHealthScore(
-      avgSleepHours: avgSleepHours,
-      sleepDebt: cumulativeDebt,
-      sleepConsistency: sleepConsistency,
-      consecutiveNightShifts: consecutiveNightShifts,
-    );
+        // 건강 점수 계산
+        final healthScore = _service.calculateShiftWorkerHealthScore(
+          avgSleepHours: avgSleepHours,
+          sleepDebt: cumulativeDebt,
+          sleepConsistency: sleepConsistency,
+          consecutiveNightShifts: consecutiveNightShifts,
+        );
 
-    return Scaffold(
+        return Scaffold(
       appBar: widget.hideAppBar ? null : AppBar(
         title: const Text('야간 노동자 대시보드'),
         actions: [
@@ -108,54 +108,7 @@ class _ShiftWorkerDashboardScreenState
                 setState(() {});
               });
             },
-            tooltip: '주간 스케줄 설정',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () async {
-              final sleepProvider = Provider.of<SleepProvider>(context, listen: false);
-              final scheduleProvider = Provider.of<ScheduleProvider>(context, listen: false);
-              
-              if (sleepProvider.entries.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('수면 기록이 없습니다. 먼저 수면 기록을 추가해주세요.'),
-                  ),
-                );
-                return;
-              }
-              
-              final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-              await scheduleProvider.generateScheduleFromSleepEntries(
-                sleepProvider.entries,
-                dayStartHour: settingsProvider.dayStartHour,
-              );
-              
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      '주간 스케줄이 수면 기록으로부터 재생성되었습니다 📅\n패턴: ${scheduleProvider.currentSchedule?.detectPattern() ?? "없음"}',
-                    ),
-                    duration: const Duration(seconds: 3),
-                  ),
-                );
-                setState(() {}); // 화면 갱신
-              }
-            },
-            tooltip: '수면 기록으로부터 스케줄 재생성',
-          ),
-          IconButton(
-            icon: const Icon(Icons.visibility),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const WeeklyScheduleScreen(),
-                ),
-              );
-            },
-            tooltip: '주간 스케줄 보기',
+            tooltip: '주간 스케줄',
           ),
           IconButton(
             icon: const Icon(Icons.event_note),
@@ -167,12 +120,7 @@ class _ShiftWorkerDashboardScreenState
                 ),
               );
             },
-            tooltip: '일일 계획 보기',
-          ),
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            onPressed: _showShiftInputDialog,
-            tooltip: '근무 정보 입력',
+            tooltip: '일일 계획',
           ),
         ],
       ),
@@ -226,6 +174,8 @@ class _ShiftWorkerDashboardScreenState
           ],
         ),
       ),
+        );
+      },
     );
   }
 
@@ -566,6 +516,7 @@ class _ShiftWorkerDashboardScreenState
     return Card(
       elevation: 4,
       child: Container(
+        width: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [scoreColor.withOpacity(0.7), scoreColor],
@@ -576,6 +527,7 @@ class _ShiftWorkerDashboardScreenState
         ),
         padding: const EdgeInsets.all(24),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
               '야간 노동자 건강 점수',
@@ -584,6 +536,7 @@ class _ShiftWorkerDashboardScreenState
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             Text(
@@ -600,6 +553,7 @@ class _ShiftWorkerDashboardScreenState
                 color: Colors.white,
                 fontSize: 16,
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -1055,17 +1009,74 @@ class _ShiftWorkerDashboardScreenState
   }
 
   Widget _buildLightStrategyCard(WeeklySchedule schedule) {
-    final today = DateTime.now();
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    final today = getTodayKey(settingsProvider.dayStartHour);
     final todayShift = schedule.getShiftForDate(today);
 
     if (todayShift == null) {
-      return const SizedBox.shrink();
+      return Card(
+        color: Colors.amber.shade50,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.wb_sunny, color: Colors.amber.shade700),
+                  const SizedBox(width: 8),
+                  Text(
+                    '빛 노출 전략',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber.shade700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text('오늘의 근무 정보가 없어 빛 노출 전략을 생성할 수 없습니다.'),
+            ],
+          ),
+        ),
+      );
     }
 
     final strategy = _service.generateLightExposureStrategy(
       shift: todayShift,
       now: today,
     );
+
+    if (strategy.isEmpty) {
+      return Card(
+        color: Colors.amber.shade50,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.wb_sunny, color: Colors.amber.shade700),
+                  const SizedBox(width: 8),
+                  Text(
+                    '빛 노출 전략',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber.shade700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text('빛 노출 전략 정보를 불러올 수 없습니다.'),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Card(
       color: Colors.amber.shade50,
@@ -1076,14 +1087,28 @@ class _ShiftWorkerDashboardScreenState
           children: [
             Row(
               children: [
-                Icon(Icons.wb_sunny, color: Colors.amber.shade700),
+                Icon(Icons.light_mode, color: Colors.amber.shade700, size: 24),
                 const SizedBox(width: 8),
-                Text(
-                  '빛 노출 전략',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.amber.shade700,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '빛 노출 전략',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amber.shade700,
+                        ),
+                      ),
+                      Text(
+                        _getShiftTypeLabel(todayShift.type),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.amber.shade700.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -1092,16 +1117,33 @@ class _ShiftWorkerDashboardScreenState
             ...strategy.entries.map((entry) {
               final value = entry.value as Map<String, dynamic>;
               return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      value['description'] ?? '',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text(value['recommendation'] ?? ''),
-                  ],
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        value['description'] ?? '',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        value['recommendation'] ?? '',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }),
@@ -1109,6 +1151,17 @@ class _ShiftWorkerDashboardScreenState
         ),
       ),
     );
+  }
+
+  String _getShiftTypeLabel(ShiftType type) {
+    switch (type) {
+      case ShiftType.night:
+        return '야간 근무자용';
+      case ShiftType.day:
+        return '주간 근무자용';
+      case ShiftType.off:
+        return '휴무일용';
+    }
   }
 
   Color _getScoreColor(double score) {
