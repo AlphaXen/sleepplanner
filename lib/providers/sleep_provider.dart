@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/sleep_entry.dart';
 import '../services/notification_service.dart';
 import '../models/adaptive_params.dart';
@@ -21,8 +23,20 @@ class SleepProvider extends ChangeNotifier {
   final AdaptiveSleepService _adaptiveService = AdaptiveSleepService();
   DailyPlan? lastDailyPlan;
 
+  // Firebase
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  User? _currentUser;
+
   List<SleepEntry> get entries => List.unmodifiable(_entries);
   int get dailyTargetHours => _dailyTargetHours;
+
+  /// 사용자 설정 및 Firestore 동기화 시작
+  void setUser(User? user) {
+    _currentUser = user;
+    if (user != null) {
+      _loadFromFirestore();
+    }
+  }
 
   void setDailyTarget(int hours) {
     if (hours <= 0) return;
@@ -32,11 +46,66 @@ class SleepProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addEntry(SleepEntry entry) {
+  Future<void> addEntry(SleepEntry entry) async {
     _entries.add(entry);
     _resetGoalFlagIfNewDay();
     _checkGoalAndNotify();
+    
+    // Firestore에 저장 (로그인 상태일 때만)
+    if (_currentUser != null) {
+      await _saveToFirestore(entry);
+    }
+    
     notifyListeners();
+  }
+
+  /// Firestore에서 데이터 로드
+  Future<void> _loadFromFirestore() async {
+    if (_currentUser == null) return;
+
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .collection('sleep_entries')
+          .orderBy('wakeTime', descending: true)
+          .get();
+
+      _entries.clear();
+      for (final doc in snapshot.docs) {
+        _entries.add(SleepEntry.fromJson(doc.id, doc.data()));
+      }
+
+      debugPrint('Loaded ${_entries.length} sleep entries from Firestore');
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading from Firestore: $e');
+    }
+  }
+
+  /// Firestore에 데이터 저장
+  Future<void> _saveToFirestore(SleepEntry entry) async {
+    if (_currentUser == null) return;
+
+    try {
+      final docRef = await _firestore
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .collection('sleep_entries')
+          .add(entry.toJson());
+
+      debugPrint('Saved sleep entry to Firestore: ${docRef.id}');
+    } catch (e) {
+      debugPrint('Error saving to Firestore: $e');
+      // 저장 실패해도 로컬에는 저장되어 있으므로 계속 진행
+    }
+  }
+
+  /// 수동으로 Firestore 동기화
+  Future<void> syncWithFirestore() async {
+    if (_currentUser != null) {
+      await _loadFromFirestore();
+    }
   }
 
   Duration get todaySleepDuration {

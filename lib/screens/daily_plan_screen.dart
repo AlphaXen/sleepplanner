@@ -18,12 +18,12 @@ class DailyPlanScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Daily Sleep Plan"),
+        title: const Text("일일 수면 계획"),
       ),
       body: plan == null
           ? const Center(
               child: Text(
-                "아직 Daily Plan 이 없습니다.\n근무 정보를 입력해 계산하세요.",
+                "아직 일일 계획이 없습니다.\n근무 정보를 입력해 계산하세요.",
                 textAlign: TextAlign.center,
               ),
             )
@@ -62,10 +62,10 @@ class DailyPlanScreen extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            Text("Start: ${_fmt(plan.mainSleepStart)}"),
-            Text("End:   ${_fmt(plan.mainSleepEnd)}"),
+            Text("시작: ${_fmt(plan.mainSleepStart)}"),
+            Text("종료: ${_fmt(plan.mainSleepEnd)}"),
             const SizedBox(height: 8),
-            Text("Duration: ${h}h ${m}m"),
+            Text("기간: ${h}시간 ${m}분"),
           ],
         ),
       ),
@@ -105,7 +105,7 @@ class DailyPlanScreen extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            Text("Wind-down 시작: ${_fmt(plan.winddownStart)}"),
+            Text("취침 준비 시작: ${_fmt(plan.winddownStart)}"),
           ],
         ),
       ),
@@ -200,7 +200,7 @@ class DailyPlanScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "📝 Notes",
+              "📝 메모",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),

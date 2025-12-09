@@ -176,17 +176,17 @@ class _EnvironmentCheckerScreenState extends State<EnvironmentCheckerScreen> {
           value: map[0]!.toDouble(),
           color: Colors.green,
           radius: 45,
-          title: "Good\n${(map[0]! * 100 / tot).toStringAsFixed(0)}%"),
+          title: "좋음\n${(map[0]! * 100 / tot).toStringAsFixed(0)}%"),
       PieChartSectionData(
           value: map[1]!.toDouble(),
           color: Colors.orange,
           radius: 45,
-          title: "Caution\n${(map[1]! * 100 / tot).toStringAsFixed(0)}%"),
+          title: "주의\n${(map[1]! * 100 / tot).toStringAsFixed(0)}%"),
       PieChartSectionData(
           value: map[2]!.toDouble(),
           color: Colors.red,
           radius: 45,
-          title: "Poor\n${(map[2]! * 100 / tot).toStringAsFixed(0)}%"),
+          title: "나쁨\n${(map[2]! * 100 / tot).toStringAsFixed(0)}%"),
     ];
   }
 
@@ -197,7 +197,7 @@ class _EnvironmentCheckerScreenState extends State<EnvironmentCheckerScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Environment Checker"),
+        title: const Text("환경 체커"),
         actions: [
           IconButton(
             icon: const Icon(Icons.bar_chart),
@@ -405,7 +405,7 @@ class _EnvironmentCheckerScreenState extends State<EnvironmentCheckerScreen> {
                           );
                         },
                         icon: const Icon(Icons.show_chart),
-                        label: const Text('Detail Graphs'),
+                        label: const Text('상세 그래프'),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -415,17 +415,17 @@ class _EnvironmentCheckerScreenState extends State<EnvironmentCheckerScreen> {
                           final confirm = await showDialog<bool>(
                             context: context,
                             builder: (ctx) => AlertDialog(
-                              title: const Text('Clear Data'),
+                              title: const Text('데이터 삭제'),
                               content: const Text(
-                                  'Are you sure you want to delete all local data?'),
+                                  '모든 로컬 데이터를 삭제하시겠습니까?'),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(ctx, false),
-                                  child: const Text('Cancel'),
+                                  child: const Text('취소'),
                                 ),
                                 FilledButton(
                                   onPressed: () => Navigator.pop(ctx, true),
-                                  child: const Text('Delete'),
+                                  child: const Text('삭제'),
                                 ),
                               ],
                             ),
@@ -441,7 +441,7 @@ class _EnvironmentCheckerScreenState extends State<EnvironmentCheckerScreen> {
                           }
                         },
                         icon: const Icon(Icons.delete_outline),
-                        label: const Text('Clear Data'),
+                        label: const Text('데이터 삭제'),
                       ),
                     ),
                   ],
@@ -575,7 +575,7 @@ class LuxNoiseDetailPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Detail Graphs"),
+        title: const Text("상세 그래프"),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -1035,16 +1035,16 @@ class DailyStatsPage extends StatelessWidget {
                             Icon(Icons.wb_sunny_rounded,
                                 color: Colors.orange.shade700),
                             const SizedBox(width: 8),
-                            Text('Light Statistics',
+                            Text('빛 통계',
                                 style: theme.textTheme.titleMedium),
                           ],
                         ),
                         const SizedBox(height: 16),
                         _buildStatRow(
-                            'Average', '${avgLux.toStringAsFixed(1)} lux'),
+                            '평균', '${avgLux.toStringAsFixed(1)} lux'),
                         const SizedBox(height: 8),
                         _buildStatRow(
-                            'Maximum', '${maxLux.toStringAsFixed(1)} lux'),
+                            '최대', '${maxLux.toStringAsFixed(1)} lux'),
                       ],
                     ),
                   ),
@@ -1064,16 +1064,16 @@ class DailyStatsPage extends StatelessWidget {
                             Icon(Icons.volume_up_rounded,
                                 color: Colors.blue.shade700),
                             const SizedBox(width: 8),
-                            Text('Noise Statistics',
+                            Text('소음 통계',
                                 style: theme.textTheme.titleMedium),
                           ],
                         ),
                         const SizedBox(height: 16),
                         _buildStatRow(
-                            'Average', '${avgNoise.toStringAsFixed(1)} dB'),
+                            '평균', '${avgNoise.toStringAsFixed(1)} dB'),
                         const SizedBox(height: 8),
                         _buildStatRow(
-                            'Maximum', '${maxNoise.toStringAsFixed(1)} dB'),
+                            '최대', '${maxNoise.toStringAsFixed(1)} dB'),
                       ],
                     ),
                   ),
@@ -1088,14 +1088,14 @@ class DailyStatsPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Environment Quality',
+                        Text('환경 품질',
                             style: theme.textTheme.titleMedium),
                         const SizedBox(height: 16),
-                        _buildQualityRow('Good', good, Colors.green),
+                        _buildQualityRow('좋음', good, Colors.green),
                         const SizedBox(height: 8),
-                        _buildQualityRow('Caution', warn, Colors.orange),
+                        _buildQualityRow('주의', warn, Colors.orange),
                         const SizedBox(height: 8),
-                        _buildQualityRow('Poor', bad, Colors.red),
+                        _buildQualityRow('나쁨', bad, Colors.red),
                       ],
                     ),
                   ),

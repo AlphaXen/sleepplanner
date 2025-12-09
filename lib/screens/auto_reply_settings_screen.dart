@@ -66,7 +66,7 @@ class _AutoReplySettingsScreenState extends State<AutoReplySettingsScreen> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: Text(rule == null ? 'Add Auto Reply Rule' : 'Edit Auto Reply Rule'),
+          title: Text(rule == null ? '자동 응답 규칙 추가' : '자동 응답 규칙 수정'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -76,8 +76,8 @@ class _AutoReplySettingsScreenState extends State<AutoReplySettingsScreen> {
                   keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    labelText: 'Phone Number',
-                    hintText: 'e.g., +1234567890',
+                    labelText: '전화번호',
+                    hintText: '예: +821012345678',
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -86,8 +86,8 @@ class _AutoReplySettingsScreenState extends State<AutoReplySettingsScreen> {
                   maxLines: 3,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    labelText: 'Auto Reply Message',
-                    hintText: 'Message to send when this number calls...',
+                    labelText: '자동 응답 메시지',
+                    hintText: '이 번호로 전화가 올 때 보낼 메시지...',
                   ),
                 ),
               ],
@@ -96,11 +96,11 @@ class _AutoReplySettingsScreenState extends State<AutoReplySettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
+              child: const Text('취소'),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Save'),
+              child: const Text('저장'),
             ),
           ],
         );
@@ -142,7 +142,7 @@ class _AutoReplySettingsScreenState extends State<AutoReplySettingsScreen> {
     if (!phonePermission.isGranted || !smsPermission.isGranted) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Phone and SMS permissions required')),
+        const SnackBar(content: Text('전화 및 SMS 권한이 필요합니다')),
       );
       await _checkPermissions();
       return;
@@ -154,7 +154,7 @@ class _AutoReplySettingsScreenState extends State<AutoReplySettingsScreen> {
       setState(() => _isServiceRunning = true);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Auto Reply service started')),
+        const SnackBar(content: Text('자동 응답 서비스가 시작되었습니다')),
       );
     } catch (e) {
       debugPrint('Failed to start service: $e');
@@ -171,7 +171,7 @@ class _AutoReplySettingsScreenState extends State<AutoReplySettingsScreen> {
       setState(() => _isServiceRunning = false);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Auto Reply service stopped')),
+        const SnackBar(content: Text('자동 응답 서비스가 중지되었습니다')),
       );
     } catch (e) {
       debugPrint('Failed to stop service: $e');
@@ -182,7 +182,7 @@ class _AutoReplySettingsScreenState extends State<AutoReplySettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Auto Reply Rules'),
+        title: const Text('자동 응답 규칙'),
         centerTitle: true,
         elevation: 0,
       ),
@@ -231,7 +231,7 @@ class _AutoReplySettingsScreenState extends State<AutoReplySettingsScreen> {
                       child: FilledButton.icon(
                         onPressed: _isServiceRunning ? null : _startService,
                         icon: const Icon(Icons.play_arrow),
-                        label: const Text('Start'),
+                        label: const Text('시작'),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -239,7 +239,7 @@ class _AutoReplySettingsScreenState extends State<AutoReplySettingsScreen> {
                       child: OutlinedButton.icon(
                         onPressed: _isServiceRunning ? _stopService : null,
                         icon: const Icon(Icons.stop),
-                        label: const Text('Stop'),
+                        label: const Text('중지'),
                       ),
                     ),
                   ],
@@ -321,7 +321,7 @@ class _AutoReplySettingsScreenState extends State<AutoReplySettingsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _addOrEditRule(),
         icon: const Icon(Icons.add),
-        label: const Text('Add Rule'),
+        label: const Text('규칙 추가'),
       ),
     );
   }

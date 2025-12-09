@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../providers/sleep_provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/schedule_provider.dart';
 import '../models/sleep_entry.dart';
 import '../widgets/daily_tip_card.dart';
 import '../services/sleep_api_service.dart';
 import 'stats_screen.dart';
-import 'shift_input_screen.dart';
 import 'auto_reply_settings_screen.dart';
 import 'alarm_screen.dart';
 import 'sleep_music_screen.dart';
@@ -14,13 +15,41 @@ import 'calendar_screen.dart';
 import 'daily_suggestions_screen.dart';
 import 'environment_checker_screen.dart';
 import 'light_control_screen.dart';
+import 'integrated_sleep_management_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // 사용자 정보를 SleepProvider에 전달하고 스케줄 자동 생성
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final sleepProvider = Provider.of<SleepProvider>(context, listen: false);
+      final scheduleProvider = Provider.of<ScheduleProvider>(context, listen: false);
+      
+      sleepProvider.setUser(authProvider.user);
+      
+      // Firebase에서 데이터 로드 후 스케줄 자동 생성
+      if (authProvider.isAuthenticated) {
+        await sleepProvider.syncWithFirestore();
+        if (sleepProvider.entries.isNotEmpty) {
+          await scheduleProvider.generateScheduleFromSleepEntries(sleepProvider.entries);
+        }
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<SleepProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
     final duration = provider.todaySleepDuration;
     final progress = provider.todayProgress;
 
@@ -28,33 +57,60 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Sleep Planner'),
         actions: [
-          // Auto Reply Settings Screen button
-          IconButton(
-            icon: const Icon(Icons.message_outlined),
-            tooltip: 'Auto Reply Settings',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                    builder: (_) => const AutoReplySettingsScreen()),
-              );
-            },
-          ),
+          // 클라우드 상태 표시 (로그인 상태일 때만)
+          if (authProvider.isAuthenticated)
+            IconButton(
+              icon: Icon(Icons.cloud_done, color: Colors.green.shade400),
+              tooltip: '클라우드 동기화됨',
+              onPressed: () async {
+                await provider.syncWithFirestore();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('동기화 완료! ☁️')),
+                  );
+                }
+              },
+            ),
+
+          // 로그아웃 버튼 (로그인 상태일 때만)
+          if (authProvider.isAuthenticated)
+            IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: '로그아웃',
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('로그아웃'),
+                    content: const Text('로그아웃 하시겠습니까?\n로컬 데이터는 유지됩니다.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('취소'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('로그아웃'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true && mounted) {
+                  await authProvider.signOut();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('로그아웃 되었습니다')),
+                  );
+                }
+              },
+            ),
 
           IconButton(
             icon: const Icon(Icons.show_chart),
-            tooltip: 'Stats/Graphs',
+            tooltip: '통계/그래프',
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const StatsScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.lightbulb),
-            tooltip: 'Daily Plan',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ShiftInputScreen()),
               );
             },
           ),
@@ -85,7 +141,7 @@ class HomeScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddEntryDialog(context),
         icon: const Icon(Icons.add),
-        label: const Text('Add Sleep'),
+        label: const Text('수면 추가'),
       ),
     );
   }
@@ -130,14 +186,14 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Today Sleep',
+                  Text('오늘의 수면',
                       style: Theme.of(context).textTheme.titleLarge),
-                  Text('$h h $m m / $targetHours h'),
+                  Text('$h시간 $m분 / $targetHours시간'),
                   const SizedBox(height: 8),
                   Text(
                     progress >= 1
-                        ? 'You achieved your sleep goal! 😴'
-                        : 'A bit more sleep to reach today\'s goal.',
+                        ? '수면 목표를 달성했습니다! 😴'
+                        : '오늘의 목표를 달성하기 위해 조금 더 자야 합니다.',
                   ),
                 ],
               ),
@@ -165,7 +221,7 @@ class HomeScreen extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const AlarmScreen()),
           ),
           child: _buildFeatureCardWidget(
-            'Alarms',
+            '알람',
             Icons.alarm,
             const [Color(0xFF667eea), Color(0xFF764ba2)],
           ),
@@ -176,7 +232,7 @@ class HomeScreen extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const SleepMusicScreen()),
           ),
           child: _buildFeatureCardWidget(
-            'Sleep Music',
+            '수면 음악',
             Icons.music_note,
             const [Color(0xFF11998e), Color(0xFF38ef7d)],
           ),
@@ -187,7 +243,7 @@ class HomeScreen extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const CalendarScreen()),
           ),
           child: _buildFeatureCardWidget(
-            'Calendar',
+            '달력',
             Icons.calendar_today,
             const [Color(0xFFf093fb), Color(0xFFf5576c)],
           ),
@@ -198,7 +254,7 @@ class HomeScreen extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const DailySuggestionsScreen()),
           ),
           child: _buildFeatureCardWidget(
-            'Sleep Tips',
+            '수면 팁',
             Icons.tips_and_updates,
             const [Color(0xFF4facfe), Color(0xFF00f2fe)],
           ),
@@ -209,7 +265,7 @@ class HomeScreen extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const EnvironmentCheckerScreen()),
           ),
           child: _buildFeatureCardWidget(
-            'Environment',
+            '환경',
             Icons.nightlight_round,
             const [Color(0xFF2c3e50), Color(0xFF4ca1af)],
           ),
@@ -220,9 +276,31 @@ class HomeScreen extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const LightControlScreen()),
           ),
           child: _buildFeatureCardWidget(
-            'Light Control',
+            '조명 제어',
             Icons.lightbulb_outline,
             const [Color(0xFFf7971e), Color(0xFFffd200)],
+          ),
+        ),
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AutoReplySettingsScreen()),
+          ),
+          child: _buildFeatureCardWidget(
+            '자동 응답',
+            Icons.message_outlined,
+            const [Color(0xFF9C27B0), Color(0xFFE91E63)],
+          ),
+        ),
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const IntegratedSleepManagementScreen()),
+          ),
+          child: _buildFeatureCardWidget(
+            'AI 분석 & 야간 근무',
+            Icons.psychology,
+            const [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
           ),
         ),
       ],
@@ -272,7 +350,7 @@ class HomeScreen extends StatelessWidget {
         TextEditingController(text: provider.dailyTargetHours.toString());
     return Row(
       children: [
-        const Text('Daily Target (hours):'),
+        const Text('일일 목표 (시간):'),
         const SizedBox(width: 12),
         SizedBox(
           width: 80,
@@ -303,8 +381,8 @@ class HomeScreen extends StatelessWidget {
         if (provider.entries.isEmpty) {
           return const Padding(
             padding: EdgeInsets.all(32.0),
-            child: Text(
-              'No sleep records yet.\nTap + to add.',
+              child: Text(
+              '아직 수면 기록이 없습니다.\n+ 버튼을 눌러 추가하세요.',
               textAlign: TextAlign.center,
             ),
           );
@@ -320,7 +398,7 @@ class HomeScreen extends StatelessWidget {
               title: Text(
                 '${_formatDateTime(e.sleepTime)} → ${_formatDateTime(e.wakeTime)}',
               ),
-              subtitle: Text('Duration: ${e.formattedDuration}'),
+              subtitle: Text('수면 시간: ${e.formattedDuration}'),
             );
           },
         );
@@ -341,7 +419,7 @@ class HomeScreen extends StatelessWidget {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Add Sleep Entry'),
+              title: const Text('수면 기록 추가'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -357,7 +435,7 @@ class HomeScreen extends StatelessWidget {
                           });
                         },
                         icon: const Icon(Icons.auto_awesome, size: 18),
-                        label: const Text('Load from Sleep API'),
+                        label: const Text('수면 API에서 불러오기'),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
@@ -366,7 +444,7 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     _buildDateTimePicker(
                       context: context,
-                      label: 'Sleep Time',
+                      label: '취침 시간',
                       value: sleepTime,
                       onTap: () async {
                         final result = await _pickDateTime(context);
@@ -376,7 +454,7 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     _buildDateTimePicker(
                       context: context,
-                      label: 'Wake Time',
+                      label: '기상 시간',
                       value: wakeTime,
                       onTap: () async {
                         final result = await _pickDateTime(context);
@@ -386,7 +464,7 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Text('Night shift sleep?'),
+                        const Text('야간 근무 수면?'),
                         const Spacer(),
                         Switch(
                           value: isNightShift,
@@ -400,25 +478,53 @@ class HomeScreen extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
+                  child: const Text('취소'),
                 ),
                 FilledButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (sleepTime == null || wakeTime == null) return;
                     if (wakeTime!.isBefore(sleepTime!)) return;
 
                     final provider =
                         Provider.of<SleepProvider>(context, listen: false);
-                    provider.addEntry(
+                    final scheduleProvider =
+                        Provider.of<ScheduleProvider>(context, listen: false);
+                    
+                    // 수면 기록 저장
+                    await provider.addEntry(
                       SleepEntry(
                         sleepTime: sleepTime!,
                         wakeTime: wakeTime!,
                         isNightShift: isNightShift,
                       ),
                     );
-                    Navigator.of(context).pop();
+                    
+                    // 주간 스케줄 자동 생성 (수면 기록 기반)
+                    await scheduleProvider.generateScheduleFromSleepEntries(
+                      provider.entries,
+                    );
+                    
+                    if (mounted) {
+                      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                      if (authProvider.isAuthenticated) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('수면 기록이 클라우드에 저장되었습니다 ☁️\n주간 스케줄이 자동 생성되었습니다 📅'),
+                            duration: Duration(seconds: 3),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('수면 기록이 저장되었습니다\n주간 스케줄이 자동 생성되었습니다 📅'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                      Navigator.of(context).pop();
+                    }
                   },
-                  child: const Text('Save'),
+                  child: const Text('저장'),
                 ),
               ],
             );
@@ -516,7 +622,7 @@ class HomeScreen extends StatelessWidget {
       });
       ScaffoldMessenger.of(dialogContext).showSnackBar(
         const SnackBar(
-            content: Text('No API data found. Using default values')),
+            content: Text('API 데이터를 찾을 수 없습니다. 기본값을 사용합니다')),
       );
     }
   }

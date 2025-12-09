@@ -10,13 +10,13 @@ class AlarmScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Alarms'),
+        title: const Text('알람'),
         centerTitle: true,
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
-            tooltip: 'Alarm Info',
+            tooltip: '알람 정보',
             onPressed: () => _showAlarmInfo(context),
           ),
         ],
@@ -37,7 +37,7 @@ class AlarmScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No alarms set',
+                    '설정된 알람이 없습니다',
                     style: TextStyle(
                       fontSize: 20,
                       color: Colors.grey.shade600,
@@ -61,7 +61,7 @@ class AlarmScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddAlarmDialog(context),
         icon: const Icon(Icons.add),
-        label: const Text('Add Alarm'),
+        label: const Text('알람 추가'),
       ),
     );
   }
@@ -74,7 +74,7 @@ class AlarmScreen extends StatelessWidget {
           children: [
             Icon(Icons.info, color: Colors.blue),
             SizedBox(width: 8),
-            Text('Alarm Information'),
+            Text('알람 정보'),
           ],
         ),
         content: const Column(
@@ -82,40 +82,40 @@ class AlarmScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '✅ Automatic Scheduling',
+              '✅ 자동 스케줄링',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
             Text(
-              'Your alarms are now scheduled to ring automatically at the specified time.',
+              '알람이 지정된 시간에 자동으로 울리도록 스케줄됩니다.',
             ),
             SizedBox(height: 16),
             Text(
-              '🔔 How it works:',
+              '🔔 사용 방법:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
-            Text('• Toggle ON to enable alarm\n'
-                '• Notification will appear at alarm time\n'
-                '• Tap notification to play alarm sound\n'
-                '• Use "Test Sound" to preview alarm\n'
-                '• Repeat days work automatically'),
+            Text('• 토글을 켜서 알람 활성화\n'
+                '• 알람 시간에 알림이 표시됩니다\n'
+                '• 알림을 탭하여 알람 소리 재생\n'
+                '• "소리 테스트"로 알람 미리보기\n'
+                '• 반복 요일이 자동으로 작동합니다'),
             SizedBox(height: 16),
             Text(
-              '⚠️ Important:',
+              '⚠️ 중요 사항:',
               style:
                   TextStyle(fontWeight: FontWeight.bold, color: Colors.orange),
             ),
             SizedBox(height: 8),
-            Text('• Keep app permissions enabled\n'
-                '• Don\'t clear app from recent apps\n'
-                '• Check battery optimization settings'),
+            Text('• 앱 권한을 활성화 상태로 유지하세요\n'
+                '• 최근 앱 목록에서 앱을 삭제하지 마세요\n'
+                '• 배터리 최적화 설정을 확인하세요'),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Got it!'),
+            child: const Text('확인!'),
           ),
         ],
       ),
@@ -131,7 +131,7 @@ class AlarmScreen extends StatelessWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Add New Alarm'),
+          title: const Text('새 알람 추가'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -161,8 +161,8 @@ class AlarmScreen extends StatelessWidget {
                 // Label Input
                 TextField(
                   decoration: const InputDecoration(
-                    labelText: 'Label',
-                    hintText: 'e.g., Wake up',
+                    labelText: '이름',
+                    hintText: '예: 기상 알람',
                     prefixIcon: Icon(Icons.label),
                     border: OutlineInputBorder(),
                   ),
@@ -171,7 +171,7 @@ class AlarmScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 // Repeat Days
                 const Text(
-                  'Repeat',
+                  '반복',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
@@ -200,21 +200,21 @@ class AlarmScreen extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text('취소'),
             ),
             FilledButton(
               onPressed: () {
                 final alarm = AlarmModel(
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   time: selectedTime,
-                  label: label.isEmpty ? 'Alarm' : label,
+                  label: label.isEmpty ? '알람' : label,
                   repeatDays: selectedDays,
                 );
                 Provider.of<AlarmProvider>(context, listen: false)
                     .addAlarm(alarm);
                 Navigator.pop(context);
               },
-              child: const Text('Save'),
+              child: const Text('저장'),
             ),
           ],
         ),
@@ -325,13 +325,13 @@ class _AlarmCard extends StatelessWidget {
                         });
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Alarm sound playing (10 seconds)'),
+                            content: Text('알람 소리 재생 중 (10초)'),
                             duration: Duration(seconds: 2),
                           ),
                         );
                       },
                       icon: const Icon(Icons.play_arrow, size: 16),
-                      label: const Text('Test Sound'),
+                      label: const Text('소리 테스트'),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,

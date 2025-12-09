@@ -57,7 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('User Profile')),
+      appBar: AppBar(title: const Text('사용자 프로필')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -65,7 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextField(
               controller: nameCtrl,
               decoration: const InputDecoration(
-                labelText: 'Name',
+                labelText: '이름',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -73,24 +73,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
             DropdownButtonFormField<String>(
               initialValue: chronotype,
               decoration: const InputDecoration(
-                labelText: 'Chronotype',
+                labelText: '크로노타입',
                 border: OutlineInputBorder(),
               ),
               items: const [
-                DropdownMenuItem(value: 'morning', child: Text('Morning Person')),
-                DropdownMenuItem(value: 'evening', child: Text('Night Owl')),
-                DropdownMenuItem(value: 'neutral', child: Text('Neutral')),
+                DropdownMenuItem(value: 'morning', child: Text('아침형')),
+                DropdownMenuItem(value: 'evening', child: Text('올빼미형')),
+                DropdownMenuItem(value: 'neutral', child: Text('중간형')),
               ],
               onChanged: (v) => setState(() => chronotype = v ?? 'neutral'),
             ),
             const SizedBox(height: 16),
-            Text('Caffeine Sensitivity: ${cafSens.toStringAsFixed(2)}'),
+            Text('카페인 민감도: ${cafSens.toStringAsFixed(2)}'),
             Slider(
               value: cafSens,
               onChanged: (v) => setState(() => cafSens = v),
             ),
             const SizedBox(height: 16),
-            Text('Light Sensitivity: ${lightSens.toStringAsFixed(2)}'),
+            Text('빛 민감도: ${lightSens.toStringAsFixed(2)}'),
             Slider(
               value: lightSens,
               onChanged: (v) => setState(() => lightSens = v),

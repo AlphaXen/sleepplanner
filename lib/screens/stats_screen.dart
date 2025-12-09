@@ -25,7 +25,7 @@ class StatsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sleep Stats & Graph'),
+        title: const Text('수면 통계 & 그래프'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

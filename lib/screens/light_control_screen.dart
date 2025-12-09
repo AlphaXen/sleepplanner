@@ -11,7 +11,7 @@ class LightControlScreen extends StatefulWidget {
 
 class _LightControlScreenState extends State<LightControlScreen>
     with SingleTickerProviderStateMixin {
-  String deviceIP = "http://192.168.0.50";
+  String deviceIP = "http://192.168.0.116";
   double brightness = 255;
   bool isPowerOn = false;
   String colorMode = "daylight";
@@ -25,7 +25,7 @@ class _LightControlScreenState extends State<LightControlScreen>
   Future<void> _loadIP() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      deviceIP = prefs.getString("arduino_ip") ?? "http://192.168.0.50";
+      deviceIP = prefs.getString("arduino_ip") ?? "http://192.168.0.116";
     });
   }
 
@@ -58,7 +58,7 @@ class _LightControlScreenState extends State<LightControlScreen>
         content: TextField(
           controller: controller,
           decoration: const InputDecoration(
-            labelText: "예: http://192.168.0.52",
+            labelText: "예: http://192.168.0.2",
           ),
         ),
         actions: [

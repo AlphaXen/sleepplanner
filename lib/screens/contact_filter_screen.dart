@@ -13,7 +13,7 @@ class ContactFilterScreen extends StatelessWidget {
     final controller = TextEditingController();
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Auto Reply Contacts")),
+      appBar: AppBar(title: const Text("자동 응답 연락처")),
       body: Column(
         children: [
           Padding(
@@ -43,7 +43,7 @@ class ContactFilterScreen extends StatelessWidget {
 
                     controller.clear();
                   },
-                  child: const Text("Add"),
+                  child: const Text("추가"),
                 )
               ],
             ),

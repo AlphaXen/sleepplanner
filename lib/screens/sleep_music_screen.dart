@@ -10,7 +10,7 @@ class SleepMusicScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sleep Music'),
+        title: const Text('수면 음악'),
         centerTitle: true,
         elevation: 0,
       ),

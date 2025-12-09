@@ -11,7 +11,7 @@ class CalendarScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sleep Calendar'),
+        title: const Text('수면 달력'),
         centerTitle: true,
         elevation: 0,
       ),

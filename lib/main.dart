@@ -9,8 +9,12 @@ import 'providers/alarm_provider.dart';
 import 'providers/music_provider.dart';
 import 'providers/calendar_provider.dart';
 import 'providers/env_provider.dart';
+import 'providers/feedback_provider.dart';
+import 'providers/schedule_provider.dart';
+import 'providers/auth_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/login_screen.dart';
 import 'services/onboarding_service.dart';
 import 'utils/app_logger.dart';
 
@@ -52,6 +56,7 @@ class SleepPlannerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => SleepProvider()),
         ChangeNotifierProvider(create: (_) => AutoReplyProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
@@ -59,6 +64,8 @@ class SleepPlannerApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => MusicProvider()),
         ChangeNotifierProvider(create: (_) => CalendarProvider()),
         ChangeNotifierProvider(create: (_) => EnvProvider()),
+        ChangeNotifierProvider(create: (_) => FeedbackProvider()),
+        ChangeNotifierProvider(create: (_) => ScheduleProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, theme, _) {
@@ -93,6 +100,8 @@ class _HomeRouter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
     return FutureBuilder<bool>(
       future: OnboardingService.isOnboardingCompleted(),
       builder: (context, snapshot) {
@@ -106,19 +115,26 @@ class _HomeRouter extends StatelessWidget {
 
         final isOnboardingCompleted = snapshot.data ?? false;
 
-        if (isOnboardingCompleted) {
-          return const HomeScreen();
-        } else {
+        // 온보딩 완료 여부 확인
+        if (!isOnboardingCompleted) {
           return OnboardingScreen(
             onCompleted: () async {
               await OnboardingService.markOnboardingAsCompleted();
               if (context.mounted) {
+                // 온보딩 완료 후 로그인 화면으로
                 Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const HomeScreen()),
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
                 );
               }
             },
           );
+        }
+
+        // 온보딩 완료 → 로그인 상태 확인
+        if (authProvider.isAuthenticated) {
+          return const HomeScreen();
+        } else {
+          return const LoginScreen();
         }
       },
     );
