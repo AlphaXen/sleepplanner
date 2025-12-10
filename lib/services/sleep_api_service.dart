@@ -106,16 +106,13 @@ class SleepApiService {
     DateTime estimatedWake;
     
     if (now.hour >= 0 && now.hour < 12) {
-      // 오전이면 어제 밤 ~ 오늘 아침
-      // 어제 날짜로 이동한 후 23시로 설정 (정상적인 취침 시간)
-      final yesterday = now.subtract(const Duration(days: 1));
-      estimatedSleep = DateTime(yesterday.year, yesterday.month, yesterday.day, 23, 0);
+      // 오전이면 오늘 새벽 ~ 오늘 아침 (같은 날)
+      estimatedSleep = DateTime(now.year, now.month, now.day, 2, 30);
       estimatedWake = DateTime(now.year, now.month, now.day, 7, 0);
     } else {
-      // 오후/저녁이면 오늘 밤 ~ 내일 아침
-      // 오늘 날짜로 23시 설정 (정상적인 취침 시간)
-      estimatedSleep = DateTime(now.year, now.month, now.day, 23, 0);
+      // 오후/저녁이면 내일 새벽 ~ 내일 아침 (같은 날)
       final tomorrow = now.add(const Duration(days: 1));
+      estimatedSleep = DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 2, 30);
       estimatedWake = DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 7, 0);
     }
 
