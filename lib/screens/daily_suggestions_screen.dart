@@ -24,25 +24,9 @@ class DailySuggestionsScreen extends StatelessWidget {
 
             const SizedBox(height: 32),
 
-            // Sleep Hygiene Section
-            const Text(
-              '💤 수면 위생 권장사항',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            ...SleepTips.hygieneRecommendations.map(
-              (tip) => _TipCard(tip: tip),
-            ),
-
-            const SizedBox(height: 32),
-
             // Best Practices Section
             const Text(
-              '✨ 더 나은 수면을 위한 최선의 방법',
+              '✨ 수면을 위한 최선의 방법',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
