@@ -7,8 +7,6 @@ import '../models/weekly_schedule.dart';
 import '../utils/date_utils.dart';
 
 class AdaptiveSleepService {
-  /// 하루 단위 추천 (Daily Recommendation)
-  /// 주간 스케줄이 있으면 오늘의 근무 일정을 사용하고, 근무 시간대에는 수면 권장을 하지 않음
   DailyPlan? computeDailyPlan({
     required AdaptiveParams params,
     ShiftInfo? shift,

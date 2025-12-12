@@ -1,7 +1,7 @@
 class UserProfile {
   final String uid;
   final String name;
-  final String chronotype; // 아침형 / 저녁형
+  final String chronotype;
   final double cafSens;
   final double lightSens;
 

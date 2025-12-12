@@ -64,7 +64,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// 이메일/비밀번호 로그인
   Future<bool> signInWithEmailPassword(String email, String password) async {
     try {
       _isLoading = true;
@@ -88,7 +87,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// 이메일/비밀번호 회원가입
   Future<bool> signUpWithEmailPassword(String email, String password) async {
     try {
       _isLoading = true;
@@ -112,7 +110,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// 로그아웃
   Future<void> signOut() async {
     try {
       await _googleSignIn.signOut();
@@ -124,7 +121,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// 에러 메시지 변환
   String _getErrorMessage(String code) {
     switch (code) {
       case 'user-not-found':

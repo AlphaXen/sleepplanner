@@ -1,20 +1,9 @@
 class AdaptiveParams {
-  /// 목표 수면시간 (단위: 시간, 기본 7.0h)
   double tSleep;
-
-  /// 수면 몇 시간 전부터 카페인 금지할지 (단위: 시간)
   double cafWindow;
-
-  /// 취침 준비 시작 시간 (단위: 분)
   int winddownMinutes;
-
-  /// 크로노타입 오프셋 (시간 단위, 음수/양수)
   double chronoOffset;
-
-  /// 빛 민감도 (0.0 ~ 1.0)
   double lightSens;
-
-  /// 카페인 민감도 (0.0 ~ 1.0)
   double cafSens;
 
   AdaptiveParams({

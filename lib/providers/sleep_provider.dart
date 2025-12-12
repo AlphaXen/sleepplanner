@@ -29,17 +29,14 @@ class SleepProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   User? _currentUser;
 
-  /// 수면 기록 목록 (기상 시간 기준 내림차순 정렬 - 최신 기록이 위에)
   List<SleepEntry> get entries {
     final sorted = List<SleepEntry>.from(_entries);
     sorted.sort((a, b) => b.wakeTime.compareTo(a.wakeTime));
     return List.unmodifiable(sorted);
   }
   
-  // 하위 호환성을 위한 getter (기본값 7)
   int get dailyTargetHours => _dailyTargetHours;
 
-  /// 사용자 설정 및 Firestore 동기화 시작
   void setUser(User? user) {
     _currentUser = user;
     if (user != null) {
@@ -67,29 +64,23 @@ class SleepProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 수면 기록 삭제
   Future<void> deleteEntry(SleepEntry entry) async {
-    // 로컬에서 삭제
     _entries.removeWhere((e) => e.id == entry.id || (e.id == null && e.sleepTime == entry.sleepTime && e.wakeTime == entry.wakeTime));
     _resetGoalFlagIfNewDay();
     _checkGoalAndNotify();
     
-    // Firestore에서 삭제 (로그인 상태이고 ID가 있을 때만)
     if (_currentUser != null && entry.id != null && entry.id!.isNotEmpty) {
       try {
         await _deleteFromFirestore(entry.id!);
       } catch (e) {
         debugPrint('Firestore 삭제 실패: $e');
-        // 삭제 실패 시 로컬은 이미 삭제되었으므로 계속 진행
       }
     }
     
     notifyListeners();
   }
 
-  /// 수면 기록 수정
   Future<void> updateEntry(SleepEntry oldEntry, SleepEntry newEntry) async {
-    // 로컬에서 업데이트
     final index = _entries.indexWhere((e) => 
       (oldEntry.id != null && e.id == oldEntry.id) || 
       (oldEntry.id == null && e.sleepTime == oldEntry.sleepTime && e.wakeTime == oldEntry.wakeTime)
@@ -108,7 +99,6 @@ class SleepProvider extends ChangeNotifier {
     }
   }
 
-  /// Firestore에서 데이터 로드
   Future<void> _loadFromFirestore() async {
     if (_currentUser == null) return;
 
@@ -132,8 +122,6 @@ class SleepProvider extends ChangeNotifier {
     }
   }
 
-  /// Firestore에 데이터 저장
-  /// 반환값: 저장된 entry (ID가 업데이트된 경우)
   Future<SleepEntry> _saveToFirestore(SleepEntry entry) async {
     if (_currentUser == null) return entry;
 
@@ -166,7 +154,6 @@ class SleepProvider extends ChangeNotifier {
     }
   }
 
-  /// Firestore에서 데이터 삭제
   Future<void> _deleteFromFirestore(String entryId) async {
     if (_currentUser == null || entryId.isEmpty) return;
 
@@ -184,7 +171,6 @@ class SleepProvider extends ChangeNotifier {
     }
   }
 
-  /// 수동으로 Firestore 동기화
   Future<void> syncWithFirestore() async {
     if (_currentUser != null) {
       await _loadFromFirestore();
@@ -219,7 +205,6 @@ class SleepProvider extends ChangeNotifier {
     return getTodayProgress(0, _dailyTargetHours);
   }
 
-  /// 최근 7일 수면시간 (시간 단위)
   Map<DateTime, double> getLast7DaysSleepHours(int dayStartHour) {
     final todayKey = getTodayKey(dayStartHour);
     final Map<DateTime, double> result = {};
@@ -252,8 +237,6 @@ class SleepProvider extends ChangeNotifier {
     }
   }
 
-  /// Adaptive 알고리즘: 오늘 근무 정보를 기반으로 DailyPlan 계산
-  /// 주간 스케줄과 dayStartHour를 받아서 전달
   void computeTodayPlanForShift({
     ShiftInfo? shift,
     WeeklySchedule? weeklySchedule,
@@ -291,7 +274,6 @@ class SleepProvider extends ChangeNotifier {
     }
   }
 
-  /// 주 단위 적응 알고리즘 helper
   void adaptWeeklyWithSummary({
     required double avgActualSleep,
     required double avgSleepScore,

@@ -6,8 +6,6 @@ import '../models/adaptive_params.dart';
 import '../utils/date_utils.dart';
 
 class ShiftWorkerService {
-  /// 수면 부채 계산 (최근 N일)
-  /// 기록이 없는 날은 제외됨 (0시간으로 처리하지 않음)
   List<SleepDebt> calculateSleepDebt({
     required List<SleepEntry> entries,
     required double targetHours,
@@ -17,8 +15,7 @@ class ShiftWorkerService {
     final debts = <SleepDebt>[];
     final today = getTodayKey(dayStartHour);
 
-    debugPrint('🔍 수면부채 계산 시작:');
-    debugPrint('   전체 수면 기록 수: ${entries.length}개');
+    debugPrint('수면부채 계산 시작: ${entries.length}개 기록');
     debugPrint('   목표 시간: $targetHours시간');
     debugPrint('   계산 기간: 최근 $days일');
     debugPrint('   오늘 날짜 키: ${today.toString()}');
@@ -73,12 +70,10 @@ class ShiftWorkerService {
     return debts;
   }
 
-  /// 누적 수면 부채 계산
   double calculateCumulativeDebt(List<SleepDebt> debts) {
     return debts.fold(0.0, (sum, debt) => sum + debt.debtHours);
   }
 
-  /// 낮잠 추천 (야간 근무자용)
   List<NapRecommendation> recommendNaps({
     required ShiftInfo todayShift,
     required ShiftInfo? tomorrowShift,
@@ -146,7 +141,6 @@ class ShiftWorkerService {
     return recommendations;
   }
 
-  /// 빛 노출 전략 생성
   Map<String, dynamic> generateLightExposureStrategy({
     required ShiftInfo shift,
     required DateTime now,
@@ -211,7 +205,6 @@ class ShiftWorkerService {
     return strategy;
   }
 
-  /// 회전 근무 적응 조언
   List<String> getRotationAdaptationTips({
     required ShiftType currentShift,
     required ShiftType nextShift,
@@ -251,7 +244,6 @@ class ShiftWorkerService {
     return tips;
   }
 
-  /// 수면 부채 회복 계획
   Map<String, dynamic> createDebtRecoveryPlan({
     required double cumulativeDebt,
     required WeeklySchedule? schedule,
@@ -304,7 +296,6 @@ class ShiftWorkerService {
     return plan;
   }
 
-  /// 수면 일관성 계산 (표준편차 기반)
   double calculateSleepConsistency(List<SleepDebt> debts) {
     if (debts.length < 2) return 1.0;
 
@@ -323,7 +314,6 @@ class ShiftWorkerService {
     return (1 - (variance / 2.0)).clamp(0.0, 1.0);
   }
 
-  /// 연속 야간 근무 일수 계산
   int calculateConsecutiveNightShifts(WeeklySchedule? schedule) {
     if (schedule == null) return 0;
 
@@ -345,7 +335,6 @@ class ShiftWorkerService {
     return maxConsecutive;
   }
 
-  /// 야간 노동자 건강 점수 계산
   double calculateShiftWorkerHealthScore({
     required double avgSleepHours,
     required double sleepDebt,

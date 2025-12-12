@@ -3,14 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 
-/// Google Sleep API를 통해 수면 데이터를 가져오는 서비스
 class SleepApiService {
   static final SleepApiService instance = SleepApiService._internal();
   factory SleepApiService() => instance;
   SleepApiService._internal();
 
   static const platform = MethodChannel('com.example.sleep_tracker/sleep');
-  static const String _nativeKey = 'native_pending_sleep_data'; // Kotlin이 저장하는 키 (flutter. 프리픽스 없음)
+  static const String _nativeKey = 'native_pending_sleep_data';
 
   SharedPreferences? _prefs;
 
@@ -18,15 +17,13 @@ class SleepApiService {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  /// Sleep API 구독 시작 요청
   Future<bool> requestSleepUpdates() async {
     try {
       final result = await platform.invokeMethod('requestSleepUpdates');
       debugPrint('Sleep API 구독 결과: $result');
       return result == true;
     } on PlatformException catch (e) {
-      debugPrint('Sleep API 구독 실패 (PlatformException): ${e.code} - ${e.message}');
-      debugPrint('세부 정보: ${e.details}');
+      debugPrint('Sleep API 구독 실패: ${e.code} - ${e.message}');
       return false;
     } catch (e) {
       debugPrint('Sleep API 구독 실패 (일반 오류): $e');
@@ -35,7 +32,6 @@ class SleepApiService {
     }
   }
 
-  /// 네이티브에서 저장한 최신 수면 데이터 가져오기
   Future<Map<String, DateTime>?> getLatestSleepData() async {
     if (_prefs == null) await init();
 
@@ -97,7 +93,6 @@ class SleepApiService {
     }
   }
 
-  /// 기본 추정값 생성 (API 데이터가 없을 때)
   Map<String, DateTime> getDefaultEstimate() {
     final now = DateTime.now();
     
@@ -122,7 +117,6 @@ class SleepApiService {
     };
   }
 
-  /// 네이티브 임시 데이터 삭제
   Future<void> clearNativeData() async {
     if (_prefs == null) await init();
     await _prefs?.remove(_nativeKey); // 프리픽스 없이

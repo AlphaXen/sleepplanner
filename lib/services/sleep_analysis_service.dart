@@ -6,7 +6,7 @@ import '../models/adaptive_params.dart';
 
 class SleepAnalysisResult {
   final double averageSleepHours;
-  final double sleepConsistency; // 0.0 ~ 1.0 (수면 일관성)
+  final double sleepConsistency;
   final double averageSleepScore;
   final double averageDaytimeSleepiness;
   final Map<String, double> environmentCorrelation;
@@ -29,7 +29,6 @@ class SleepAnalysisResult {
 }
 
 class SleepAnalysisService {
-  /// 종합 AI 수면 분석
   SleepAnalysisResult analyzeSleep({
     required List<SleepEntry> sleepEntries,
     required List<SleepFeedback> feedbacks,
@@ -37,7 +36,6 @@ class SleepAnalysisService {
     required AdaptiveParams adaptiveParams,
     int analysisWindowDays = 7,
   }) {
-    // 최근 N일 데이터만 분석
     final cutoff = DateTime.now().subtract(Duration(days: analysisWindowDays));
     final recentEntries = sleepEntries
         .where((e) => e.sleepTime.isAfter(cutoff))
@@ -46,13 +44,8 @@ class SleepAnalysisService {
         .where((f) => f.date.isAfter(cutoff))
         .toList();
 
-    // 1. 평균 수면 시간 계산
     final avgSleepHours = _calculateAverageSleepHours(recentEntries);
-
-    // 2. 수면 일관성 계산 (표준편차 기반)
     final sleepConsistency = _calculateSleepConsistency(recentEntries);
-
-    // 3. 평균 수면 점수 및 졸음 정도
     final avgSleepScore = recentFeedbacks.isEmpty
         ? 3.0
         : recentFeedbacks.map((f) => f.sleepScore).reduce((a, b) => a + b) /
@@ -65,13 +58,11 @@ class SleepAnalysisService {
                 .reduce((a, b) => a + b) /
             recentFeedbacks.length;
 
-    // 4. 환경 데이터 상관관계
     final envCorrelation = _analyzeEnvironmentCorrelation(
       feedbacks: recentFeedbacks,
       envSamples: envSamples,
     );
 
-    // 5. 인사이트 생성
     final insights = _generateInsights(
       avgSleepHours: avgSleepHours,
       sleepConsistency: sleepConsistency,
@@ -81,7 +72,6 @@ class SleepAnalysisService {
       adaptiveParams: adaptiveParams,
     );
 
-    // 6. 추천사항 생성
     final recommendations = _generateRecommendations(
       avgSleepHours: avgSleepHours,
       sleepConsistency: sleepConsistency,
@@ -92,7 +82,6 @@ class SleepAnalysisService {
       adaptiveParams: adaptiveParams,
     );
 
-    // 7. 트렌드 데이터 생성
     final trendData = _generateTrendData(recentEntries, recentFeedbacks);
 
     return SleepAnalysisResult(
@@ -129,8 +118,6 @@ class SleepAnalysisService {
 
     final stdDev = sqrt(sumSquaredDiff / sleepHours.length);
 
-    // 표준편차를 0~1 범위로 정규화 (낮을수록 일관성 높음)
-    // 표준편차 2시간 이상이면 0, 0시간이면 1
     return (1 - (stdDev / 2.0)).clamp(0.0, 1.0);
   }
 
@@ -138,7 +125,6 @@ class SleepAnalysisService {
       {required List<SleepFeedback> feedbacks,
       required List<EnvSample> envSamples}) {
     
-    // 환경 데이터의 평균 조도 및 소음 계산
     double avgLux = 0;
     double avgNoise = 0;
     if (envSamples.isNotEmpty) {

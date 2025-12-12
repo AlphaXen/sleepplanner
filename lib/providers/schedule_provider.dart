@@ -18,7 +18,6 @@ class ScheduleProvider extends ChangeNotifier {
     _loadSchedule();
   }
   
-  /// 스케줄 로드가 완료될 때까지 대기
   Future<void> waitForLoad() async {
     if (_isLoaded) return;
     
@@ -143,22 +142,17 @@ class ScheduleProvider extends ChangeNotifier {
 
   bool get hasSchedule => _currentSchedule != null;
 
-  /// 수면 기록 데이터로부터 주간 스케줄 자동 생성
-  /// 기존 스케줄이 있으면 덮어쓰지 않음 (force=true일 때만 덮어쓰기)
   Future<void> generateScheduleFromSleepEntries(List<SleepEntry> entries, {int dayStartHour = 0, bool force = false}) async {
     if (entries.isEmpty) {
       debugPrint('No sleep entries to generate schedule');
       return;
     }
     
-    // 기존 스케줄이 있고 force=false이면 덮어쓰지 않음
     if (!force && _currentSchedule != null) {
-      debugPrint('⚠️ 기존 스케줄이 존재하여 자동 생성하지 않습니다. (force=true로 덮어쓰기 가능)');
-      debugPrint('   기존 스케줄 패턴: ${_currentSchedule!.detectPattern()}');
+      debugPrint('기존 스케줄이 존재하여 자동 생성하지 않습니다.');
       return;
     }
 
-    // 현재 주의 월요일 구하기 (하루 시작 시간 고려)
     final todayKey = getTodayKey(dayStartHour);
     final monday = todayKey.subtract(Duration(days: todayKey.weekday - 1));
     final weekStart = DateTime(monday.year, monday.month, monday.day);
@@ -255,7 +249,6 @@ class ScheduleProvider extends ChangeNotifier {
     }
   }
 
-  /// 수면 기록 변경 시 스케줄 자동 업데이트
   void updateScheduleFromEntries(List<SleepEntry> entries) {
     generateScheduleFromSleepEntries(entries);
   }

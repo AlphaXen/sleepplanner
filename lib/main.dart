@@ -22,10 +22,7 @@ import 'utils/app_logger.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize timezone for alarm scheduling
   _initializeTimezone();
-
-  // Initialize Firebase
   await _initializeFirebase();
 
   runApp(const SleepPlannerApp());
@@ -117,13 +114,11 @@ class _HomeRouter extends StatelessWidget {
 
         final isOnboardingCompleted = snapshot.data ?? false;
 
-        // 온보딩 완료 여부 확인
         if (!isOnboardingCompleted) {
           return OnboardingScreen(
             onCompleted: () async {
               await OnboardingService.markOnboardingAsCompleted();
               if (context.mounted) {
-                // 온보딩 완료 후 로그인 화면으로
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(builder: (_) => const LoginScreen()),
                 );
@@ -132,7 +127,6 @@ class _HomeRouter extends StatelessWidget {
           );
         }
 
-        // 온보딩 완료 → 로그인 상태 확인
         if (authProvider.isAuthenticated) {
           return const HomeScreen();
         } else {

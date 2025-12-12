@@ -10,8 +10,6 @@ class WeeklySchedule {
     required this.shifts,
   });
 
-  /// 특정 날짜의 근무 정보 가져오기
-  /// 주의: 같은 주 내의 날짜만 정확하게 매칭됩니다
   ShiftInfo? getShiftForDate(DateTime date) {
     // 주간 스케줄의 weekStart와 입력 날짜가 같은 주인지 확인
     final daysFromWeekStart = date.difference(weekStart).inDays;

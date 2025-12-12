@@ -14,14 +14,11 @@ class CalendarProvider with ChangeNotifier {
     _loadDummyDataForNovember();
   }
 
-  /// 11월달 더미 데이터 생성
   void _loadDummyDataForNovember() {
     final now = DateTime.now();
-    // 11월 1일부터 11월 30일까지 더미 데이터 생성
     for (int day = 1; day <= 30; day++) {
       final date = DateTime(now.year, 11, day);
       final normalizedDate = DateTime(date.year, date.month, date.day);
-      // 랜덤한 수면 시간 생성 (6.0 ~ 9.0 시간)
       _dummyData[normalizedDate] = 6.0 + (day % 4) + (day % 3) * 0.3;
     }
   }
@@ -36,12 +33,9 @@ class CalendarProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// 날짜별 수면 시간 가져오기
-  /// 11월: 더미 데이터, 12월: 실제 데이터
   double? getSleepHours(DateTime date, List<SleepEntry>? actualEntries) {
     final normalizedDate = DateTime(date.year, date.month, date.day);
     
-    // 11월이면 더미 데이터 반환
     if (date.month == 11) {
       return _dummyData[normalizedDate];
     }
